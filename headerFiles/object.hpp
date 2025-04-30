@@ -1,3 +1,5 @@
+#pragma once
+
 #include <memory>
 #include <vector>
 #include <Eigen/Dense>
@@ -6,13 +8,15 @@ class Face;
 class HalfEdge;
 class Vertex;
 
-class Object{
+class HalfEdge{
     public:
-        std::vector<Face> faces;
-        std::vector<HalfEdge> halfEdges;
-        std::vector<Vertex> vertices;
-        std::string textureFile;
-        Object(){}
+        int id;
+        std::shared_ptr<HalfEdge> next;
+        std::shared_ptr<HalfEdge> previous; //make doubly linked, as being singly linked is stupid
+        std::shared_ptr<HalfEdge> twin;
+        std::shared_ptr<Vertex> vertex; //origin vertex
+        std::shared_ptr<Face> face;
+        HalfEdge(int _id): id(_id){}
 };
 
 class Face{
@@ -29,24 +33,13 @@ class Face{
             std::shared_ptr<HalfEdge> currentHalfEdge = halfEdge;
             do{
                 halfEdges.push_back(currentHalfEdge);
-                currentHalfEdge = halfEdge->next;
+                currentHalfEdge = currentHalfEdge->next;
             }
             while(currentHalfEdge != halfEdge);
         }
         std::vector<std::shared_ptr<Vertex>> getVertices(){
 
         }
-};
-
-class HalfEdge{
-    public:
-        int id;
-        std::shared_ptr<HalfEdge> next;
-        std::shared_ptr<HalfEdge> previous; //make doubly linked, as being singly linked is stupid
-        std::shared_ptr<HalfEdge> twin;
-        std::shared_ptr<Vertex> vertex; //origin vertex
-        std::shared_ptr<Face> face;
-        HalfEdge(int _id): id(_id){}
 };
 
 class Vertex{
@@ -73,4 +66,13 @@ class Vertex{
             while(currentHalfEdge != halfEdge);
             return neighbourhood; 
         }
+};
+
+class Object{
+    public:
+        std::vector<Face> faces;
+        std::vector<HalfEdge> halfEdges;
+        std::vector<Vertex> vertices;
+        std::string textureFile;
+        Object(){}
 };

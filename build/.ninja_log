@@ -1,7 +1,8 @@
 # ninja log v5
 1	10	1745992997804411540	CMakeFiles/supplemental.dir/src/loadModel.cpp.o	9e14c562733251cd
 1	10	1745992997804411540	CMakeFiles/supplemental.dir/src/renderer.cpp.o	6c57f0688c43e2e2
-1	10	1745992997804411540	CMakeFiles/supplemental.dir/src/meshChecker.cpp.o	9e9d0299dcf6941d
 10	30	1745992997823412136	libsupplemental.so	7c733d12b913fa91
-2	614	1745992998406430384	CMakeFiles/chessRenderer.dir/main.cpp.o	559e2dd396a33d82
+1	10	1745992997804411540	CMakeFiles/supplemental.dir/src/meshChecker.cpp.o	9e9d0299dcf6941d
 2	547	1745994362569542558	CMakeFiles/chessRenderer.dir/main.cpp.o	559e2dd396a33d82
+1	727	1746020923825271511	CMakeFiles/supplemental.dir/src/loadModel.cpp.o	9e14c562733251cd
+2	729	1746020923827271594	CMakeFiles/supplemental.dir/src/meshChecker.cpp.o	9e9d0299dcf6941d

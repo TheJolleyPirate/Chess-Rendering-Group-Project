@@ -91,6 +91,7 @@
         "variant": "cpp",
         "format": "cpp",
         "stdfloat": "cpp",
-        "__nullptr": "cpp"
+        "__nullptr": "cpp",
+        "dense": "cpp"
     }
 }
