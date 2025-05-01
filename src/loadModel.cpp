@@ -12,8 +12,10 @@ using namespace Eigen;
 
 Object meshToHalfEdge(){
 
+    return Object();
 }
 
 Object load(string fileLocation){
-
+    
+    return Object();
 }

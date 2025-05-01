@@ -36,9 +36,17 @@ class Face{
                 currentHalfEdge = currentHalfEdge->next;
             }
             while(currentHalfEdge != halfEdge);
+            return halfEdges;
         }
         std::vector<std::shared_ptr<Vertex>> getVertices(){
-
+            std::vector<std::shared_ptr<Vertex>> vertices;
+            std::shared_ptr<HalfEdge> currentHalfEdge = halfEdge;
+            do{
+                vertices.push_back(currentHalfEdge->vertex);
+                currentHalfEdge = currentHalfEdge->next;
+            }
+            while(currentHalfEdge != halfEdge);
+            return vertices;
         }
 };
 

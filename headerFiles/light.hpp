@@ -46,10 +46,10 @@ class QuadrilateralAreaLight: Light{
         randomLength *= length;
         randomLength -= length / 2;
 
-        Eigen::Vector3f samplePoint = {randomLength, randomHeight, 0};
+        Eigen::Vector4f homoSamplePoint = {randomLength, randomHeight, 0, 0};
         //rotate samplePoint around origin to get coordinates to match
-        samplePoint = samplePoint * rotationMatrix;
-        samplePoint = position + samplePoint;
+        homoSamplePoint = rotationMatrix * homoSamplePoint;
+        Eigen::Vector3f samplePoint = position + samplePoint.head(3);
         return samplePoint;
     }
 };
@@ -87,10 +87,10 @@ class ellipseAreaLight: Light{
         x = x * length/2.0;
         y = y * height/2.0;
 
-        Eigen::Vector3f samplePoint = {x, y, 0};
+        Eigen::Vector4f homoSamplePoint = {x, y, 0, 0};
         //rotate samplePoint around origin to get coordinates to match
-        samplePoint = samplePoint * rotationMatrix;
-        samplePoint = position + samplePoint;
+        homoSamplePoint = rotationMatrix * homoSamplePoint;
+        Eigen::Vector3f samplePoint = position + samplePoint.head(3);
         return samplePoint;
     }
 };

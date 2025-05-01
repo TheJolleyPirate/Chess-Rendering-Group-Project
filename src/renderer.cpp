@@ -18,10 +18,12 @@ void setPixel(Vector2i position, Vector3f colour){
 //not sure what return type for this should be yet
 Vector3f getTexture(Vector2i textureCoords, string textureFile){
 
+    return {0, 0, 0};
 }
 
-Face transformToViewSpace(Face face){
-
+shared_ptr<Face> transformToViewSpace(shared_ptr<Face> face){
+    
+    return nullptr;
 }
 
 //if we know the face is a triangle
