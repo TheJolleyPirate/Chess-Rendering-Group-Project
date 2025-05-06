@@ -92,6 +92,11 @@
         "format": "cpp",
         "stdfloat": "cpp",
         "__nullptr": "cpp",
-        "dense": "cpp"
+        "dense": "cpp",
+        "climits": "cpp",
+        "queue": "cpp",
+        "stack": "cpp",
+        "__mutex_base": "cpp",
+        "__node_handle": "cpp"
     }
 }

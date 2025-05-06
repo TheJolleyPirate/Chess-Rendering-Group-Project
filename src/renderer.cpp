@@ -4,9 +4,9 @@
 #include <cmath>
 #include "Eigen/Dense"
 
-#include <headerFiles/scene.hpp>
-#include <headerFiles/light.hpp>
-#include <headerFiles/object.hpp>
+#include <scene.hpp>
+#include <light.hpp>
+#include <object.hpp>
 
 using namespace std;
 using namespace Eigen;

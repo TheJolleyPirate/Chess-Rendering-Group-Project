@@ -4,8 +4,8 @@
 #include <cmath>
 #include "Eigen/Dense"
 
-#include <headerFiles/meshChecker.hpp>
-#include <headerFiles/object.hpp>
+#include <meshChecker.hpp>
+#include <object.hpp>
 
 using namespace std;
 using namespace Eigen;

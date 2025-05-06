@@ -4,11 +4,11 @@
 #include <cmath>
 #include "Eigen/Dense"
 
-#include <headerFiles/scene.hpp>
-#include <headerFiles/object.hpp>
+#include <scene.hpp>
+#include <object.hpp>
 
-#include <src/loadModel.cpp>
-#include <src/renderer.cpp>
+#include <loadModel.cpp>
+#include <renderer.cpp>
 
 using namespace std;
 using namespace Eigen;

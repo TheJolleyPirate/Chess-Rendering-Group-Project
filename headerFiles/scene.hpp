@@ -2,8 +2,8 @@
 
 #include <vector>
 #include <Eigen/Dense>
-#include <headerFiles/light.hpp>
-#include <headerFiles/object.hpp>
+#include <light.hpp>
+#include <object.hpp>
 
 class Scene;
 

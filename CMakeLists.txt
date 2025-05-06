@@ -12,6 +12,7 @@ include_directories(
     ${EIGEN3_INCLUDE_DIR}
     ${PROJECT_SOURCE_DIR}
     ${PROJECT_SOURCE_DIR}/headerFiles
+    ${PROJECT_SOURCE_DIR}/src
     )
 
 #add extra .cpp and .hpp files here

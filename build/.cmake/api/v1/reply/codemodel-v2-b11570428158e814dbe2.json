@@ -41,14 +41,14 @@
 				{
 					"directoryIndex" : 0,
 					"id" : "chessRenderer::@6890427a1f51a3e7e1df",
-					"jsonFile" : "target-chessRenderer-Debug-a413f5321809c7714d8b.json",
+					"jsonFile" : "target-chessRenderer-Debug-e6d036c76fc178033357.json",
 					"name" : "chessRenderer",
 					"projectIndex" : 0
 				},
 				{
 					"directoryIndex" : 0,
 					"id" : "supplemental::@6890427a1f51a3e7e1df",
-					"jsonFile" : "target-supplemental-Debug-800abd716ce6996d7f05.json",
+					"jsonFile" : "target-supplemental-Debug-b97bae08b3f5ac63fe21.json",
 					"name" : "supplemental",
 					"projectIndex" : 0
 				}
