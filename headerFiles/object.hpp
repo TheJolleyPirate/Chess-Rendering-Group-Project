@@ -57,6 +57,7 @@ class Vertex{
         int id;
         std::weak_ptr<HalfEdge> halfEdge;
         Eigen::Vector3f position;
+        Eigen::Vector3f normal;
         Eigen::Vector3f textureCoordinates;
         Eigen::Vector3f colour; //if not using texture, in range [0, 255]
         Vertex(int _id): id(_id){}
@@ -77,6 +78,32 @@ class Vertex{
             }
             while(currentHalfEdge->id != halfEdgeId);
             return neighbourhood; 
+        }
+
+        // Get all the half edges that originate from this vertex
+        std::vector<std::shared_ptr<HalfEdge>> neighbourHalfEdges() {
+            std::vector<std::shared_ptr<HalfEdge>> neighbourhood;
+            auto he = this->halfEdge;
+            do {
+                neighbourhood.push_back(he);
+                he = he->twin->next;
+            }
+            while(he != this->halfEdge);
+            return neighbourhood;
+        }
+
+        // Compute the normal vector for this vertex by averaging the normals of the faces it belongs to
+        Eigen::Vector3f computeNormal() {
+            Eigen::Vector3f normal = Eigen::Vector3f::Zero();
+            auto halfEdges = neighbourHalfEdges();
+            for (auto& he : halfEdges) {
+                if (he->face == nullptr) {
+                    continue;
+                }
+                normal += he->face->normal;
+            }
+            this->normal = normal.normalized();
+            return this->normal;
         }
 };
 

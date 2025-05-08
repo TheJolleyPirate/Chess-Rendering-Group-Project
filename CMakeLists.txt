@@ -19,7 +19,7 @@ include_directories(
 add_library(supplemental SHARED
     src/loadModel.cpp
     src/meshChecker.cpp
-    src/renderer.cpp
+    src/rasterizer.cpp
 )
 
 add_executable(chessRenderer main.cpp)
