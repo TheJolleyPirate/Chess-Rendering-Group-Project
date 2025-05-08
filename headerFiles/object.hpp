@@ -85,10 +85,10 @@ class Vertex{
             std::vector<std::shared_ptr<HalfEdge>> neighbourhood;
             auto he = this->halfEdge;
             do {
-                neighbourhood.push_back(he);
-                he = he->twin->next;
+                neighbourhood.push_back(he.lock());
+                he = he.lock()->twin.lock()->next;
             }
-            while(he != this->halfEdge);
+            while(he.lock() != this->halfEdge.lock());
             return neighbourhood;
         }
 

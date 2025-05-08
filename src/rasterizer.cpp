@@ -51,7 +51,12 @@ void rst::Rasterizer::rasterizeObjects(Scene scene){
         if (object.textureFile != "") {
             set_texture(Texture(object.textureFile));
         }
-        draw(object.faces, scene.lights);
+        auto facesPtr = object.getFaces().lock();
+        if (!facesPtr) {
+            std::cerr << "Error: Unable to lock weak_ptr for faces!" << std::endl;
+            continue;
+        }
+        draw(*facesPtr, scene.lights);
     }
 }
 
