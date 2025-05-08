@@ -10,7 +10,7 @@ class Vertex;
 
 class HalfEdge{
     public:
-        int id;
+        int id; //unique within object
         std::shared_ptr<HalfEdge> next;
         std::weak_ptr<HalfEdge> previous; //make doubly linked, as being singly linked is stupid
         std::weak_ptr<HalfEdge> twin;
@@ -21,9 +21,10 @@ class HalfEdge{
 
 class Face{
     public:
-        int id;
+        int id; //unique within object
         std::weak_ptr<HalfEdge> halfEdge;
         Eigen::Vector3f normal;
+        Eigen::Vector3f colour; //for if object does not have a texture
         //need to figure out how to represent material
         //auto material;
         Face(){}
@@ -54,7 +55,7 @@ class Face{
 
 class Vertex{
     public:
-        int id;
+        int id; //unique within object
         std::weak_ptr<HalfEdge> halfEdge;
         Eigen::Vector3f position;
         Eigen::Vector3f normal;
@@ -107,37 +108,9 @@ class Vertex{
         }
 };
 
-//trying out memory managment techniques here, decided to try out weak pointers
-//to get the contents you have to "lock it"
-//E.g: weak_ptr<vector<Face>> weakFaces = object.getFaces();
-// shared_ptr<vector<Face>> faces = weakFaces.lock();
-// shared_ptr<HalfEdge> he = faces[0]->halfEdge;
-//or shared_ptr<HalfEdge> he = object.getFaces().lock()[0]->halfEdge;
 class Object{
     public:
-        std::string textureFile;
-        Object(){}
-        std::weak_ptr<std::vector<Face>> getFaces(){
-            return std::make_shared<std::vector<Face>>(faces);
-        }
-        std::weak_ptr<std::vector<HalfEdge>> getHalfEdges(){
-            return std::make_shared<std::vector<HalfEdge>>(halfEdges);
-        }
-        std::weak_ptr<std::vector<Vertex>> getVertices(){
-            return std::make_shared<std::vector<Vertex>>(vertices);
-        }
-        void setFaces(std::vector<Face> _faces){
-            faces = _faces;
-        }
-        void setHalfEdges(std::vector<HalfEdge> _halfEdges){
-            halfEdges = _halfEdges;
-        }
-        void setVertices(std::vector<Vertex> _vertices){
-            vertices = _vertices;
-        }
-    private:
-        std::vector<Face> faces;
-        std::vector<HalfEdge> halfEdges;
-        std::vector<Vertex> vertices;
-
+        std::vector<std::shared_ptr<Face>> faces;
+        std::vector<std::shared_ptr<HalfEdge>> halfEdges;
+        std::vector<std::shared_ptr<Vertex>> vertices;
 };

@@ -4,6 +4,7 @@
 #include <cmath>
 #include <set>
 #include <stack>
+#include <map>
 #include "Eigen/Dense"
 
 #include <meshChecker.hpp>
@@ -13,21 +14,53 @@ using namespace std;
 using namespace Eigen;
 
 bool objectClosed(const Object &object){
-    //TODO
-    return false;
+    for(shared_ptr<HalfEdge> halfEdge : object.halfEdges){
+        if(!halfEdge->face){
+            return false;
+        }
+        shared_ptr<HalfEdge> twin = halfEdge->twin.lock();
+        if(!twin){
+            return false;
+        }
+        shared_ptr<HalfEdge> twinTwin = twin->twin.lock();
+        if(!twinTwin || twinTwin->id != halfEdge->id){
+            return false;
+        }
+    }
+    return true;
 }
 
 void makeObjectClosed(Object &object){
     //TODO
 }
 
-bool facesClosed(const Object &object){
-    //TODO
-    return false;
-}
-
 bool objectConnected(const Object &object){
-    //TODO
+    set<int> visited;
+    shared_ptr<Vertex> startingVert = object.vertices[0];
+    if(!startingVert){
+        return false;
+    }
+
+    stack<shared_ptr<Vertex>> vertexStack;
+    vertexStack.push(startingVert);
+
+    while (!vertexStack.empty()) {
+        shared_ptr<Vertex> vertex = vertexStack.top(); 
+        vertexStack.pop();
+        if (!vertex || visited.count(vertex->id) > 0){
+            continue;
+        }
+        visited.insert(vertex->id);
+        for (std::shared_ptr<Vertex> neighbour : vertex->getNeighbourVertices()) {
+            vertexStack.push(neighbour);
+        }
+    }
+
+    int numVisited = visited.size();
+    int numVertices = object.vertices.size();
+    if(numVisited == numVertices){
+        return true;
+    }
     return false;
 }
 
@@ -36,17 +69,143 @@ void makeObjectConnected(Object &object){
 }
 
 bool objectManifold(const Object &object){
-    //TODO
-    return false;
+    //to check edge manifoldness, make sure their are exactly 2 faces on each edge.
+    //first check to make sure only 2 faces share an edge
+    vector<vector<int>> numEdgesBetweenVertices(object.vertices.size(), vector<int>(object.vertices.size(), 0));
+    for(shared_ptr<Face> face : object.faces){
+        shared_ptr<HalfEdge> current = face->halfEdge.lock();
+        int startID = current->id;
+        do{
+            if(!current->vertex || !current->next || !current->next->vertex){
+                break;
+            }
+            shared_ptr<HalfEdge> previous = current;
+            current = current->next;
+            int currentID = current->vertex->id;
+            int previousID = previous->vertex->id;
+            numEdgesBetweenVertices[previousID][currentID] += 1;
+            numEdgesBetweenVertices[currentID][previousID] += 1;
+            if(numEdgesBetweenVertices[previousID][currentID] > 2){
+                return false;
+            }
+        }
+        while(current->id != startID);
+    }
+    for(vector<int> start : numEdgesBetweenVertices){
+        for(int connections : start){
+            if (connections > 0 && connections != 2){
+                return false;
+            }
+        }
+    }
+    vector<vector<int>> startingPoints(object.vertices.size(), vector<int>());
+    //then check if there are any edges with no face
+    for(shared_ptr<HalfEdge> halfEdge : object.halfEdges){
+        if(!halfEdge->face){
+            return false;
+        }
+        int id = halfEdge->vertex->id;
+        startingPoints[id].push_back(halfEdge->id);
+    }
+    //check vertex manifoldness by exploring vertex fans
+    int index = 0;
+    int maxFan = object.vertices.size();
+
+    for(shared_ptr<Vertex> vertex : object.vertices){
+        vector<int> currentFan;
+        shared_ptr<HalfEdge> halfEdge = vertex->halfEdge.lock();
+        shared_ptr<HalfEdge> twin;
+        if(!vertex || !halfEdge){
+            continue;
+        }
+        //get a halfedge on a random fan of the current vertex
+        //get all halfedges which are part of the fan by traverseing it
+        //first forward
+        bool fullyExplored = false;
+        while(true){
+            if(find(currentFan.begin(), currentFan.end(), halfEdge->id) != currentFan.end()){
+                fullyExplored = true;
+                break;
+            }
+            currentFan.push_back(halfEdge->id);
+            if(currentFan.size() > maxFan){
+                return false;
+            }
+            twin = halfEdge->twin.lock();
+            if(!twin || !twin->face || !twin->next){
+                break;
+            }
+            halfEdge = twin->next;
+        }
+
+        //then backwards
+        halfEdge = vertex->halfEdge.lock()->previous.lock();
+        twin = halfEdge->twin.lock();
+        if(!fullyExplored && twin && twin->face){
+            if(!twin){
+                break;
+            }
+            halfEdge = twin;
+            while(true){
+                if(find(currentFan.begin(), currentFan.end(), halfEdge->id) != currentFan.end()){
+                    break;
+                }
+                currentFan.push_back(halfEdge->id);
+                if(currentFan.size() > maxFan){
+                    return false;
+                }
+                halfEdge = halfEdge->previous.lock();
+                twin = halfEdge->twin.lock();
+                if(!twin || !twin->face || !twin->next){
+                    break;
+                }
+                halfEdge = twin;
+            }
+        }
+        //if there is a half edge coming from this vertex
+        //which has not been found in the fan traversal
+        //then the vertex is not manifold
+        for(int id : startingPoints[vertex->id]){
+            if(find(currentFan.begin(), currentFan.end(), id) == currentFan.end()){
+                return false;
+            }
+        }
+    }
+    return true;
 }
 
 void makeObjectManifold(Object &object){
     //TODO
 }
 
-bool objectTri(const Object &object){
+bool objectFacesConsistentlyOrientated(const Object &object){
+    //two adjacent polygons have a consistant orientation if touching edges face opposite directions
+    //make a bool for each origin vertex - destination vertex combo and set it to false
+    vector<vector<bool>> originToDest(object.vertices.size(), vector<bool>(object.vertices.size(), false));
+    for(shared_ptr<HalfEdge> halfEdge : object.halfEdges){
+        int origin = halfEdge->vertex->id;
+        int destination = halfEdge->next->vertex->id;
+        //if the current half edge's origin and destination have been encountered return false
+        if(originToDest[origin][destination]){
+            return false;
+        }
+        //set the current origin and destination combo to true
+        originToDest[origin][destination] = true;
+    }
+    return true;
+}
+
+void makeObjectFacesConsistentlyOrientated(Object &object){
     //TODO
-    return false;
+}
+
+bool objectTri(const Object &object){
+    for(int i = 0; i < object.faces.size(); ++i){
+        if(object.faces[i]->getHalfEdges().size() > 3){
+            return false;
+        }
+    }
+    return true;
 }
 
 vector<vector<Vector3f>> triangulateQuad(Vector3f leftOrigin, Vector3f leftDest, Vector3f rightOrigin, Vector3f rightDest){
@@ -677,42 +836,138 @@ vector<pair<Vector3f, vector<shared_ptr<HalfEdge>>>> selfIntersectChecker(const 
     return selfInteceptPoints;
 }
 
-vector<vector<vector<Vector3f>>> triangulate(const vector<shared_ptr<Face>> &faces){
-    vector<vector<vector<Vector3f>>> triangles;
-    for(shared_ptr<Face> face : faces){
-        //check how many sides current face has
-        shared_ptr<HalfEdge> HalfEdge = face->halfEdge.lock();
-        auto current = HalfEdge;
-        int startID = current->id;
-        int numEdges = 0;
-        do{
-            current = current->next;
-            numEdges += 1;
-        }
-        while(current->id != startID);
-        vector<vector<Vector3f>> tri;
-        //if it is already a triangle, return unchanged
-        if(numEdges == 3){
-            tri.push_back({HalfEdge->vertex->position, HalfEdge->next->vertex->position, HalfEdge->next->next->vertex->position});
-        }
-        //if it is a quad and has no self intersections use basic quad triangulation
-        else if (numEdges == 4 && selfIntersectChecker(face).size() == 0){
-            //for left and right edges all that matters is that they are opposite edges actual orientation doesn't matter
-            Vector3f leftOrigin = HalfEdge->vertex->position;
-            Vector3f leftDest = HalfEdge->next->vertex->position;
-            Vector3f rightOrigin = HalfEdge->next->next->vertex->position;
-            Vector3f rightDest = HalfEdge->next->next->next->vertex->position;
-            tri = triangulateQuad(leftOrigin, leftDest, rightOrigin, rightDest);
-        }
-        //else use Seidel's
-        else{
-            tri = SeidelTriangulate(face);
-        }
-        triangles.push_back(tri);
+vector<vector<Vector3f>> triangulate(const shared_ptr<Face> &face){
+    vector<vector<Vector3f>> triangles;
+    //check how many sides current face has
+    shared_ptr<HalfEdge> HalfEdge = face->halfEdge.lock();
+    auto current = HalfEdge;
+    int startID = current->id;
+    int numEdges = 0;
+    do{
+        current = current->next;
+        numEdges += 1;
+    }
+    while(current->id != startID);
+    //if it is already a triangle, return unchanged
+    if(numEdges == 3){
+        triangles.push_back({HalfEdge->vertex->position, HalfEdge->next->vertex->position, HalfEdge->next->next->vertex->position});
+    }
+    //if it is a quad and has no self intersections use basic quad triangulation
+    else if (numEdges == 4 && selfIntersectChecker(face).size() == 0){
+        //for left and right edges all that matters is that they are opposite edges actual orientation doesn't matter
+        Vector3f leftOrigin = HalfEdge->vertex->position;
+        Vector3f leftDest = HalfEdge->next->vertex->position;
+        Vector3f rightOrigin = HalfEdge->next->next->vertex->position;
+        Vector3f rightDest = HalfEdge->next->next->next->vertex->position;
+        triangles = triangulateQuad(leftOrigin, leftDest, rightOrigin, rightDest);
+    }
+    //else use Seidel's
+    else{
+        triangles = SeidelTriangulate(face);
     }
     return triangles;
 }
 
 void makeObjectTri(Object &object){
-    //TODO
+    vector<shared_ptr<Vertex>> vertices;
+    vector<shared_ptr<Face>> faces;
+    vector<shared_ptr<HalfEdge>> halfEdges;
+    map<vector<float>, int> vertexIndex;
+    map<int, Vector3f> indexVertex;
+    int vertexID, faceID, halfEdgeID;
+    vertexID = faceID = halfEdgeID = 0;
+    map<int, vector<shared_ptr<HalfEdge>>> halfEdgesByDestination;
+
+    auto makeFaceTri = [&](const shared_ptr<Face> face) -> void{
+        vector<vector<Vector3f>> faceTriangles = triangulate(face);
+        for(vector<Vector3f> triangle : faceTriangles){
+            vector<int> faceCoords = {};
+            for(Vector3f point : triangle){
+                vector<float> vectorPoint = {point[0], point[1], point[2]};
+                if(vertexIndex.count(vectorPoint) == 0){
+                    vertexIndex.insert({vectorPoint, vertexID});
+                    indexVertex.insert({vertexID, point});
+                    vertexID += 1;
+                }
+                faceCoords.push_back(vertexIndex[{point[0], point[1], point[2]}]);
+            }
+        }
+        vertices.resize(vertexIndex.size());
+        Vector3f colour = face->colour;
+
+        for(vector<Vector3f> faceCoords : faceTriangles){
+            shared_ptr<Face> face = make_shared<Face>(Face(faceID++));
+            face->colour = colour; 
+            shared_ptr<HalfEdge> previous = nullptr;
+            shared_ptr<Vertex> firstVertex;
+            shared_ptr<HalfEdge> firstHalfEdge;
+            for(Vector3f point: faceCoords){
+                int vertexNum =vertexIndex[{point[0], point[1], point[2]}];
+                shared_ptr<HalfEdge> halfEdge = make_shared<HalfEdge>(HalfEdge(faceID++));
+                if(previous != nullptr){
+                    previous->next = halfEdge;
+                    halfEdge->previous = previous;
+                    if (halfEdgesByDestination.find(vertexNum) == halfEdgesByDestination.end()){
+                        halfEdgesByDestination.insert({vertexNum, vector<shared_ptr<HalfEdge>>()});
+                    }
+                    halfEdgesByDestination[vertexNum].push_back(previous);
+                }
+                else{
+                    firstHalfEdge = halfEdge;
+                }
+                shared_ptr<Vertex> vertex;
+                if(vertices[vertexNum] == nullptr){
+                    vertex = make_shared<Vertex>(Vertex(vertexNum));
+                    vertex->position = point;
+                    vertex->halfEdge = halfEdge;
+                    vertices[vertexNum] = vertex;
+                }
+                else{
+                    vertex = vertices[vertexNum];
+                }
+                halfEdge->vertex = vertex;
+                halfEdge->face = face;
+                halfEdges.push_back(halfEdge);
+                previous = halfEdge;
+            }
+            previous->next = firstHalfEdge;
+            firstHalfEdge->previous = previous;
+            int id = firstHalfEdge->vertex->id;
+            if (halfEdgesByDestination.find(id) == halfEdgesByDestination.end()){
+                halfEdgesByDestination.insert({id, vector<shared_ptr<HalfEdge>>()});
+            }
+            halfEdgesByDestination[id].push_back(previous);
+            face->halfEdge = firstHalfEdge;
+            faces.push_back(face);
+        }
+    };
+
+    for(int i = 0; i < object.faces.size(); ++i){
+        makeFaceTri(object.faces[i]);
+    }
+    for(shared_ptr<HalfEdge> halfEdge : halfEdges){
+        shared_ptr<HalfEdge> twin = halfEdge->twin.lock();
+        if(!twin){
+            int origin = halfEdge->vertex->id;
+            int destination = halfEdge->next->vertex->id;
+            for (shared_ptr<HalfEdge> twin : halfEdgesByDestination[origin]){
+                if(twin->vertex->id == destination){
+                    if(!twin->twin.lock()){
+                        halfEdge->twin = twin;
+                        twin->twin = halfEdge;
+                        break;
+                    }
+                }
+            }
+        }
+    }
+    for(int i = 0; i < vertices.size(); ++i){
+        if(vertices[i] == nullptr){
+            vertices[i] = make_shared<Vertex>(i);
+            vertices[i]->position = indexVertex[i];
+        }
+    }
+    object.vertices = vertices;
+    object.faces = faces;
+    object.halfEdges = halfEdges;
 }
