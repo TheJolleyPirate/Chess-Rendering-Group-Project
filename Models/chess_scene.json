@@ -1,0 +1,184 @@
+{
+    "objects": [
+        {
+            "model": "Stone_Chess_Board.obj",
+            "position": [
+                0.0,
+                0.0,
+                0.0
+            ],
+            "rotation": [
+                0.0,
+                0.0,
+                0.0
+            ],
+            "scale": [
+                1.0,
+                1.0,
+                1.0
+            ]
+        },
+        {
+            "model": "Wooden_Chess_Pawn_Side_B_V2_L3.obj",
+            "position": [
+                -3.5,
+                0.0,
+                1.0
+            ],
+            "rotation": [
+                0.0,
+                0.0,
+                0.0
+            ],
+            "scale": [
+                1.0,
+                1.0,
+                1.0
+            ]
+        },
+        {
+            "model": "Wooden_Chess_Pawn_Side_B_V2_L3.obj",
+            "position": [
+                -2.5,
+                0.0,
+                1.0
+            ],
+            "rotation": [
+                0.0,
+                0.0,
+                0.0
+            ],
+            "scale": [
+                1.0,
+                1.0,
+                1.0
+            ]
+        },
+        {
+            "model": "Wooden_Chess_Pawn_Side_B_V2_L3.obj",
+            "position": [
+                -1.5,
+                0.0,
+                1.0
+            ],
+            "rotation": [
+                0.0,
+                0.0,
+                0.0
+            ],
+            "scale": [
+                1.0,
+                1.0,
+                1.0
+            ]
+        },
+        {
+            "model": "Wooden_Chess_Pawn_Side_B_V2_L3.obj",
+            "position": [
+                -0.5,
+                0.0,
+                1.0
+            ],
+            "rotation": [
+                0.0,
+                0.0,
+                0.0
+            ],
+            "scale": [
+                1.0,
+                1.0,
+                1.0
+            ]
+        },
+        {
+            "model": "Wooden_Chess_Pawn_Side_B_V2_L3.obj",
+            "position": [
+                0.5,
+                0.0,
+                1.0
+            ],
+            "rotation": [
+                0.0,
+                0.0,
+                0.0
+            ],
+            "scale": [
+                1.0,
+                1.0,
+                1.0
+            ]
+        },
+        {
+            "model": "Wooden_Chess_Pawn_Side_B_V2_L3.obj",
+            "position": [
+                1.5,
+                0.0,
+                1.0
+            ],
+            "rotation": [
+                0.0,
+                0.0,
+                0.0
+            ],
+            "scale": [
+                1.0,
+                1.0,
+                1.0
+            ]
+        },
+        {
+            "model": "Wooden_Chess_Pawn_Side_B_V2_L3.obj",
+            "position": [
+                2.5,
+                0.0,
+                1.0
+            ],
+            "rotation": [
+                0.0,
+                0.0,
+                0.0
+            ],
+            "scale": [
+                1.0,
+                1.0,
+                1.0
+            ]
+        },
+        {
+            "model": "Wooden_Chess_Pawn_Side_B_V2_L3.obj",
+            "position": [
+                3.5,
+                0.0,
+                1.0
+            ],
+            "rotation": [
+                0.0,
+                0.0,
+                0.0
+            ],
+            "scale": [
+                1.0,
+                1.0,
+                1.0
+            ]
+        },
+        {
+            "model": "Wooden_Chess_King_Side_A_v1_l3.obj",
+            "position": [
+                0.0,
+                0.0,
+                7.0
+            ],
+            "rotation": [
+                0.0,
+                0.0,
+                0.0
+            ],
+            "scale": [
+                1.0,
+                1.0,
+                1.0
+            ]
+        }
+    ]
+}
