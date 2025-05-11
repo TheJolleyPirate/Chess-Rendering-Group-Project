@@ -12,5 +12,5 @@ newmtl 12937_WoodenChessPawnSideB
 	Kd 1.0000 1.0000 1.0000
 	Ks 0.5400 0.5400 0.5400
 	Ke 0.0000 0.0000 0.0000
-	map_Ka 12937_WoodenChessPawnSideB_diffuse.jpg
-	map_Kd 12937_WoodenChessPawnSideB_diffuse.jpg
+	map_Ka WoodenChessPawnSideB_diffuse.jpg
+	map_Kd WoodenChessPawnSideB_diffuse.jpg
