@@ -4,6 +4,7 @@
 #include <vector>
 #include <Eigen/Dense>
 class Object;
+class Material;
 class Face;
 class HalfEdge;
 class Vertex;
@@ -24,9 +25,7 @@ class Face{
         int id; //unique within object
         std::weak_ptr<HalfEdge> halfEdge;
         Eigen::Vector3f normal;
-        Eigen::Vector3f colour; //for if object does not have a texture
-        //need to figure out how to represent material
-        //auto material;
+        Material material;
         Face(){}
         Face(int _id): id(_id){}
         std::vector<std::shared_ptr<HalfEdge>> getHalfEdges(){
@@ -60,7 +59,7 @@ class Vertex{
         Eigen::Vector3f position;
         Eigen::Vector3f normal;
         Eigen::Vector3f textureCoordinates;
-        Eigen::Vector3f colour; //if not using texture, in range [0, 255]
+        Eigen::Vector3f colour; //if you are doing colour per vertex
         Vertex(int _id): id(_id){}
         std::vector<std::shared_ptr<Vertex>> getNeighbourVertices(){
             std::vector<std::shared_ptr<Vertex>> neighbourhood;
@@ -105,6 +104,75 @@ class Vertex{
             }
             this->normal = normal.normalized();
             return this->normal;
+        }
+};
+
+class Material{
+    public:
+        Eigen::Vector3f colour;
+        std::string textureFile;
+        float opacity;
+        float ior; // index of refraction
+        float shininessExponant;
+        float lightEmission;
+        bool textured;
+        float kd; //diffuse light
+        float ks; //specular light
+        float ka; //ambiant light
+
+        Material::Material(){
+            kd = 0.8;
+            ks = 0.2;
+            ka = kd;
+            shininessExponant = 25;
+            lightEmission = 0;
+            textured=false;
+            ior=2;
+        }
+
+        Material::Material(Vector3f _colour){
+            colour = _colour;
+            kd = 0.8;
+            ks = 0.2;
+            ka = kd;
+            shininessExponant = 25;
+            lightEmission = 0;
+            textured=false;
+            ior=2;
+        }
+
+        Material::Material(std::string _textureFile){
+            kd = 0.8;
+            ks = 0.2;
+            ka = kd;
+            shininessExponant = 25;
+            lightEmission = 0;
+            textured=true;
+            textureFile = _textureFile;
+            ior=2;
+        }
+
+        float getKR(const Eigen::Vector3f &incidentPoint, const Eigen::Vector3f &normal){
+            float cosi = clamp(-1.0f, 1.0f, incidentPoint.dot(normal));
+            float etai = 1, etat = ior;
+            float kr;
+            if (cosi > 0) {  std::swap(etai, etat); }
+            // Compute sini using Snell's law
+            float sint = etai / etat * sqrtf(std::max(0.f, 1 - cosi * cosi));
+            // Total internal reflection
+            if (sint >= 1) {
+                kr = 1;
+            }
+            else {
+                float cost = sqrtf(std::max(0.f, 1 - sint * sint));
+                cosi = fabsf(cosi);
+                float Rs = ((etat * cosi) - (etai * cost)) / ((etat * cosi) + (etai * cost));
+                float Rp = ((etai * cosi) - (etat * cost)) / ((etai * cosi) + (etat * cost));
+                kr = (Rs * Rs + Rp * Rp) / 2;
+            }
+            // As a consequence of the conservation of energy, transmittance is given by:
+            // kt = 1 - kr;
+            return kr;
         }
 };
 

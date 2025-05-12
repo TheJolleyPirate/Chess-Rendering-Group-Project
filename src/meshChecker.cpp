@@ -893,11 +893,11 @@ void makeObjectTri(Object &object){
             }
         }
         vertices.resize(vertexIndex.size());
-        Vector3f colour = face->colour;
+        Material material = face->material;
 
         for(vector<Vector3f> faceCoords : faceTriangles){
             shared_ptr<Face> face = make_shared<Face>(Face(faceID++));
-            face->colour = colour; 
+            face->material = material; 
             shared_ptr<HalfEdge> previous = nullptr;
             shared_ptr<Vertex> firstVertex;
             shared_ptr<HalfEdge> firstHalfEdge;
