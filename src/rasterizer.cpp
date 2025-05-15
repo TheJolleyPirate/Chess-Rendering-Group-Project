@@ -45,22 +45,24 @@ void rst::Rasterizer::clear(Buffers buff) {
     }
 }
 
+// Convert a 3D vector to a 4D vector
+auto to_vec4(const Eigen::Vector3f &v3, float w = 1.0f) {
+    return Vector4f(v3.x(), v3.y(), v3.z(), w);
+}
+
+
 // Rasterize the objects in the scene
 void rst::Rasterizer::rasterizeObjects(Scene scene){
     for (auto& object : scene.objects) {
-        if (object.textureFile != "") {
-            set_texture(Texture(object.textureFile));
+        if (object.material.textureFile != "") {
+            set_texture(Texture(object.material.textureFile));
         }
-        auto facesPtr = object.getFaces().lock();
-        if (!facesPtr) {
-            std::cerr << "Error: Unable to lock weak_ptr for faces!" << std::endl;
-            continue;
-        }
-        draw(*facesPtr, scene.lights);
+        auto faces = object.faces;
+        draw(faces, scene.lights);
     }
 }
 
-void rst::Rasterizer::draw(std::vector<Face> faces, std::vector<Light> lights) {
+void rst::Rasterizer::draw(std::vector<std::shared_ptr<Face>> faces, std::vector<Light> lights) {
     // Needed to manually map z screen positions to [nearPlane, farPlane] for current test camera
     float f1 = (50 - 0.1) / 2.0f;
     float f2 = (50 + 0.1) / 2.0f;
@@ -74,7 +76,7 @@ void rst::Rasterizer::draw(std::vector<Face> faces, std::vector<Light> lights) {
 
     // Extract vertices from the face
     for (auto &face : faces) {
-        auto vertices = face.getVertices();
+        auto vertices = face->getVertices();
         if (vertices.size() != 3) {
             std::cerr << "Error: Face is not a triangle!" << std::endl;
             return;
@@ -110,6 +112,41 @@ void rst::Rasterizer::draw(std::vector<Face> faces, std::vector<Light> lights) {
 
 // TODO: if we don't know what shape the face is
 void rasterizeFace(Face face){
+}
+
+// Check if a point (x, y) is inside a triangle defined by three vertices
+static bool insideTriangle(float x, float y, const Vector4f *_v) {
+    Vector3f v[3];
+    for (int i = 0; i < 3; i++)
+        v[i] = {_v[i].x(), _v[i].y(), 1.0};
+    Vector3f p(x, y, 1.);
+    Vector3f f0, f1, f2;
+    f0 = (p - v[0]).cross(v[1] - v[0]);
+    f1 = (p - v[1]).cross(v[2] - v[1]);
+    f2 = (p - v[2]).cross(v[0] - v[2]);
+    if (f0.dot(f1) > 0 && f1.dot(f2) > 0)
+        return true;
+    return false;
+}
+
+// Compute barycentric coordinates for a point (x, y) inside a triangle defined by three vertices
+static std::tuple<float, float, float> computeBarycentric2D(float x, float y, const Vector4f *v) {
+    float c1 = (x * (v[1].y() - v[2].y()) + (v[2].x() - v[1].x()) * y + v[1].x() * v[2].y() - v[2].x() * v[1].y()) /
+               (v[0].x() * (v[1].y() - v[2].y()) + (v[2].x() - v[1].x()) * v[0].y() + v[1].x() * v[2].y() -
+                v[2].x() * v[1].y());
+    float c2 = (x * (v[2].y() - v[0].y()) + (v[0].x() - v[2].x()) * y + v[2].x() * v[0].y() - v[0].x() * v[2].y()) /
+               (v[1].x() * (v[2].y() - v[0].y()) + (v[0].x() - v[2].x()) * v[1].y() + v[2].x() * v[0].y() -
+                v[0].x() * v[2].y());
+    float c3 = (x * (v[0].y() - v[1].y()) + (v[1].x() - v[0].x()) * y + v[0].x() * v[1].y() - v[1].x() * v[0].y()) /
+               (v[2].x() * (v[0].y() - v[1].y()) + (v[1].x() - v[0].x()) * v[2].y() + v[0].x() * v[1].y() -
+                v[1].x() * v[0].y());
+    return {c1, c2, c3};
+}
+
+// Interpolates a 3D vector (e.g., color, normal) using barycentric coordinates
+static Eigen::Vector3f interpolate(float alpha, float beta, float gamma, const Eigen::Vector3f &vert1,
+    const Eigen::Vector3f &vert2, const Eigen::Vector3f &vert3, float weight) {
+return (alpha * vert1 + beta * vert2 + gamma * vert3) / weight;
 }
 
 // If we know the face is a triangle
@@ -187,46 +224,6 @@ void rst::Rasterizer::rasterizeTriangle(std::vector<Vertex> &vertices, std::vect
     }
     // Perform post-processing to average the SSAA samples
     postProcessBuffer();
-}
-
-// Convert a 3D vector to a 4D vector
-auto to_vec4(const Eigen::Vector3f &v3, float w = 1.0f) {
-    return Vector4f(v3.x(), v3.y(), v3.z(), w);
-}
-
-// Check if a point (x, y) is inside a triangle defined by three vertices
-static bool insideTriangle(float x, float y, const Vector4f *_v) {
-    Vector3f v[3];
-    for (int i = 0; i < 3; i++)
-        v[i] = {_v[i].x(), _v[i].y(), 1.0};
-    Vector3f p(x, y, 1.);
-    Vector3f f0, f1, f2;
-    f0 = (p - v[0]).cross(v[1] - v[0]);
-    f1 = (p - v[1]).cross(v[2] - v[1]);
-    f2 = (p - v[2]).cross(v[0] - v[2]);
-    if (f0.dot(f1) > 0 && f1.dot(f2) > 0)
-        return true;
-    return false;
-}
-
-// Compute barycentric coordinates for a point (x, y) inside a triangle defined by three vertices
-static std::tuple<float, float, float> computeBarycentric2D(float x, float y, const Vector4f *v) {
-    float c1 = (x * (v[1].y() - v[2].y()) + (v[2].x() - v[1].x()) * y + v[1].x() * v[2].y() - v[2].x() * v[1].y()) /
-               (v[0].x() * (v[1].y() - v[2].y()) + (v[2].x() - v[1].x()) * v[0].y() + v[1].x() * v[2].y() -
-                v[2].x() * v[1].y());
-    float c2 = (x * (v[2].y() - v[0].y()) + (v[0].x() - v[2].x()) * y + v[2].x() * v[0].y() - v[0].x() * v[2].y()) /
-               (v[1].x() * (v[2].y() - v[0].y()) + (v[0].x() - v[2].x()) * v[1].y() + v[2].x() * v[0].y() -
-                v[0].x() * v[2].y());
-    float c3 = (x * (v[0].y() - v[1].y()) + (v[1].x() - v[0].x()) * y + v[0].x() * v[1].y() - v[1].x() * v[0].y()) /
-               (v[2].x() * (v[0].y() - v[1].y()) + (v[1].x() - v[0].x()) * v[2].y() + v[0].x() * v[1].y() -
-                v[1].x() * v[0].y());
-    return {c1, c2, c3};
-}
-
-// Interpolates a 3D vector (e.g., color, normal) using barycentric coordinates
-static Eigen::Vector3f interpolate(float alpha, float beta, float gamma, const Eigen::Vector3f &vert1,
-    const Eigen::Vector3f &vert2, const Eigen::Vector3f &vert3, float weight) {
-return (alpha * vert1 + beta * vert2 + gamma * vert3) / weight;
 }
 
 // Post-process the SSAA buffer to average the samples and store them in the main frame buffer

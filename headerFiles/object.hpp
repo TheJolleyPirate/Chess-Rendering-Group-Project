@@ -25,7 +25,6 @@ class Face{
         int id; //unique within object
         std::weak_ptr<HalfEdge> halfEdge;
         Eigen::Vector3f normal;
-        Material material;
         Face(){}
         Face(int _id): id(_id){}
         std::vector<std::shared_ptr<HalfEdge>> getHalfEdges(){
@@ -58,7 +57,7 @@ class Vertex{
         std::weak_ptr<HalfEdge> halfEdge;
         Eigen::Vector3f position;
         Eigen::Vector3f normal;
-        Eigen::Vector3f textureCoordinates;
+        Eigen::Vector2f textureCoordinates;
         Eigen::Vector3f colour; //if you are doing colour per vertex
         Vertex(int _id): id(_id){}
         std::vector<std::shared_ptr<Vertex>> getNeighbourVertices(){
@@ -120,7 +119,7 @@ class Material{
         float ks; //specular light
         float ka; //ambiant light
 
-        Material::Material(){
+        Material(){
             kd = 0.8;
             ks = 0.2;
             ka = kd;
@@ -130,7 +129,7 @@ class Material{
             ior=2;
         }
 
-        Material::Material(Vector3f _colour){
+        Material(Eigen::Vector3f _colour){
             colour = _colour;
             kd = 0.8;
             ks = 0.2;
@@ -141,7 +140,7 @@ class Material{
             ior=2;
         }
 
-        Material::Material(std::string _textureFile){
+        Material(std::string _textureFile){
             kd = 0.8;
             ks = 0.2;
             ka = kd;
@@ -153,7 +152,7 @@ class Material{
         }
 
         float getKR(const Eigen::Vector3f &incidentPoint, const Eigen::Vector3f &normal){
-            float cosi = clamp(-1.0f, 1.0f, incidentPoint.dot(normal));
+            float cosi = std::clamp(-1.0f, 1.0f, incidentPoint.dot(normal));
             float etai = 1, etat = ior;
             float kr;
             if (cosi > 0) {  std::swap(etai, etat); }
@@ -181,4 +180,5 @@ class Object{
         std::vector<std::shared_ptr<Face>> faces;
         std::vector<std::shared_ptr<HalfEdge>> halfEdges;
         std::vector<std::shared_ptr<Vertex>> vertices;
+        Material material;
 };

@@ -13,9 +13,9 @@
 },
 {
   "directory": "/home/danny/Desktop/Projects/computer graphics/Chess-Rendering-Group-Project/build",
-  "command": "/usr/bin/g++ -Dsupplemental_EXPORTS -I/usr/include/opencv4 -I/usr/include/eigen3 -I\"/home/danny/Desktop/Projects/computer graphics/Chess-Rendering-Group-Project\" -I\"/home/danny/Desktop/Projects/computer graphics/Chess-Rendering-Group-Project/headerFiles\" -I\"/home/danny/Desktop/Projects/computer graphics/Chess-Rendering-Group-Project/src\" -g -std=gnu++17 -fPIC -o CMakeFiles/supplemental.dir/src/renderer.cpp.o -c \"/home/danny/Desktop/Projects/computer graphics/Chess-Rendering-Group-Project/src/renderer.cpp\"",
-  "file": "/home/danny/Desktop/Projects/computer graphics/Chess-Rendering-Group-Project/src/renderer.cpp",
-  "output": "CMakeFiles/supplemental.dir/src/renderer.cpp.o"
+  "command": "/usr/bin/g++ -Dsupplemental_EXPORTS -I/usr/include/opencv4 -I/usr/include/eigen3 -I\"/home/danny/Desktop/Projects/computer graphics/Chess-Rendering-Group-Project\" -I\"/home/danny/Desktop/Projects/computer graphics/Chess-Rendering-Group-Project/headerFiles\" -I\"/home/danny/Desktop/Projects/computer graphics/Chess-Rendering-Group-Project/src\" -g -std=gnu++17 -fPIC -o CMakeFiles/supplemental.dir/src/rasterizer.cpp.o -c \"/home/danny/Desktop/Projects/computer graphics/Chess-Rendering-Group-Project/src/rasterizer.cpp\"",
+  "file": "/home/danny/Desktop/Projects/computer graphics/Chess-Rendering-Group-Project/src/rasterizer.cpp",
+  "output": "CMakeFiles/supplemental.dir/src/rasterizer.cpp.o"
 },
 {
   "directory": "/home/danny/Desktop/Projects/computer graphics/Chess-Rendering-Group-Project/build",

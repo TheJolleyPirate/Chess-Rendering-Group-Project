@@ -38,7 +38,7 @@ public:
 
     void rasterizeObjects(Scene scene);
 
-    void draw(std::vector<Face> faces, std::vector<Light> lights);
+    void draw(std::vector<std::shared_ptr<Face>> faces, std::vector<Light> lights);
 
     void setPixel(const Vector2i& point, const Eigen::Vector3f& color);
 
