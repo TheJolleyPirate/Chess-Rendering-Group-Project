@@ -16,19 +16,19 @@
 using namespace std;
 using namespace Eigen;
 
-vector<Object> loadModel(string fileLocation){
+void loadModel(map<string, Object> &objects, string fileLocation){
 
-    return vector<Object>();
+    
 }
 
-vector<Object> loadModels(vector<string> files){
+map<string, Object> loadModels(vector<string> files){
 
-    return vector<Object>();
+    return map<string, Object>();
 }
 
-vector<Object> loadModels(string folder){
+map<string, Object> loadModels(string folder){
 
-    return vector<Object>();
+    return map<string, Object>();
 }
 
 void captureImage(){
@@ -42,17 +42,17 @@ Matrix4f rotateScene(float angle, Vector3f axis){
 
 void renderScene(Scene scene){
     // Manually create camera for now -- potentially add to scene class
-    //Camera camera(Vector3f(0, 0, 10), Vector3f(0, 0, 0), Vector3f(0, 1, 0), 45.0f, 1.0f, 0.1f, 50.0f);
-    //std::function<Eigen::Vector3f(fragment_shader_payload)> active_shader = texture_fragment_shader;
+    Camera camera(Vector3f(0, 0, 10), Vector3f(0, 0, 0), Vector3f(0, 1, 0), 45.0f, 1.0f, 0.1f, 50.0f);
+    std::function<Eigen::Vector3f(fragment_shader_payload)> active_shader = texture_fragment_shader;
 
     // Set up rasterizer
-    //rst::Rasterizer r(512, 512);
-    //r.clear(rst::Buffers::Colour | rst::Buffers::Depth);
-    //r.setView(camera.getViewMatrix());
-    //r.setProjection(camera.getProjectionMatrix());
-    //r.setFragmentShader(active_shader);
+    rst::Rasterizer r(512, 512);
+    r.clear(rst::Buffers::Colour | rst::Buffers::Depth);
+    r.setView(camera.getViewMatrix());
+    r.setProjection(camera.getProjectionMatrix());
+    r.setFragmentShader(active_shader);
     // Draw objects
-    //r.rasterizeObjects(scene);
+    r.rasterizeObjects(scene);
 
 }
 

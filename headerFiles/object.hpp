@@ -18,6 +18,7 @@ class HalfEdge{
         std::shared_ptr<Vertex> vertex; //origin vertex
         std::shared_ptr<Face> face;
         HalfEdge(int _id): id(_id){}
+        HalfEdge(){}
 };
 
 class Face{
@@ -78,6 +79,7 @@ class Vertex{
             while(currentHalfEdge->id != halfEdgeId);
             return neighbourhood; 
         }
+        Vertex(){}
 
         // Get all the half edges that originate from this vertex
         std::vector<std::shared_ptr<HalfEdge>> neighbourHalfEdges() {
@@ -109,11 +111,18 @@ class Vertex{
 class Material{
     public:
         Eigen::Vector3f colour;
-        std::string textureFile;
+        std::string diffuseTextureFile;
+        //below are optional
+        std::string specularTextureFile;
+        std::string ambiantTextureFile;
+        std::string specularShininessTextureFile;
+        std::string opacityTextureFile; //alpha
+        std::string bumpMapTextureFile;
         float opacity;
         float ior; // index of refraction
-        float shininessExponant;
+        float shininessExponant;// Specular Exponent
         float lightEmission;
+        float lightAbsorption; //ocular density
         bool textured;
         float kd; //diffuse light
         float ks; //specular light
@@ -140,14 +149,14 @@ class Material{
             ior=2;
         }
 
-        Material(std::string _textureFile){
+        Material(std::string _diffuseTextureFile){
             kd = 0.8;
             ks = 0.2;
             ka = kd;
             shininessExponant = 25;
             lightEmission = 0;
             textured=true;
-            textureFile = _textureFile;
+            diffuseTextureFile = _diffuseTextureFile;
             ior=2;
         }
 

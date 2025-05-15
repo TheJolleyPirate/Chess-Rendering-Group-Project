@@ -54,8 +54,8 @@ auto to_vec4(const Eigen::Vector3f &v3, float w = 1.0f) {
 // Rasterize the objects in the scene
 void rst::Rasterizer::rasterizeObjects(Scene scene){
     for (auto& object : scene.objects) {
-        if (object.material.textureFile != "") {
-            set_texture(Texture(object.material.textureFile));
+        if (object.material.diffuseTextureFile != "") {
+            set_texture(Texture(object.material.diffuseTextureFile));
         }
         auto faces = object.faces;
         draw(faces, scene.lights);

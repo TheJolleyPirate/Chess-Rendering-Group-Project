@@ -303,10 +303,12 @@ namespace objl
                 return false;
 
             // Calulate Triangle's Normal
-            Vector3 n = GenTriNormal(tri1, tri2, tri3);
+            Vector3 u = tri2 - tri1;
+            Vector3 v = tri3 - tri1;
+            Vector3 normal = math::CrossV3(u,v);
 
             // Project the point onto this normal
-            Vector3 proj = math::ProjV3(point, n);
+            Vector3 proj = math::ProjV3(point, normal);
 
             // If the distance from the triangle to the point is 0
             //	it lies on the triangle
