@@ -4,6 +4,7 @@
 #include <cmath>
 #include "Eigen/Dense"
 #include <filesystem>
+#include <map>
 
 #include <scene.hpp>
 #include <object.hpp>
@@ -77,6 +78,8 @@ void renderScene(Scene scene){
 }
 
 int main(){
-
+    std::map<std::string, Object> objects = loadModels("../Models");
+    Scene scene = buildScene(objects);
+    renderScene(scene);
     return 0;
 }

@@ -4,6 +4,8 @@
 #include <Eigen/Dense>
 #include <light.hpp>
 #include <object.hpp>
+#include <string>
+#include <map>
 
 class Scene;
 
@@ -17,5 +19,5 @@ class Scene{
             lights = _lights;
             eyePosition = _eyePosition;
         }
-        void buildScene();
 };
+Scene buildScene(std::map<std::string, Object> objects);

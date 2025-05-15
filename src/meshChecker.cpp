@@ -178,7 +178,7 @@ void makeObjectManifold(Object &object){
     //TODO
 }
 
-bool objectFacesConsistentlyOrientated(const Object &object){
+bool objectFacesConsistent(const Object &object){
     //two adjacent polygons have a consistant orientation if touching edges face opposite directions
     //make a bool for each origin vertex - destination vertex combo and set it to false
     vector<vector<bool>> originToDest(object.vertices.size(), vector<bool>(object.vertices.size(), false));
@@ -195,7 +195,7 @@ bool objectFacesConsistentlyOrientated(const Object &object){
     return true;
 }
 
-void makeObjectFacesConsistentlyOrientated(Object &object){
+void makeObjectFacesConsistent(Object &object){
     vector<shared_ptr<Face>> consistentFaces;
     vector<shared_ptr<HalfEdge>> consistentHalfEdges;
     set<int> visited;

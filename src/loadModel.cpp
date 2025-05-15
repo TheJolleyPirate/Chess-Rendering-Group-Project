@@ -6,8 +6,8 @@
 #include "Eigen/Dense"
 #include <fstream>
 
-#include "headerFiles/meshChecker.hpp"
-#include "headerFiles/object.hpp"
+#include "meshChecker.hpp"
+#include "object.hpp"
 
 using namespace std;
 using namespace Eigen;
@@ -552,6 +552,21 @@ Object load(string fileLocation) {
     catch(string message){
         std::cerr << "Failed to load OBJ file: " << fileLocation << ", reason: " << message << std::endl;
         return object;
+    }
+    if(!objectFacesConsistent){
+        makeObjectFacesConsistent(object);
+    }
+    if(!objectTri(object)){
+        makeObjectTri(object);
+    }
+    if(!objectClosed){
+        cerr << fileLocation << " not closed\n";
+    }
+    if(!objectConnected){
+        cerr << fileLocation << " not fully connected\n";
+    }
+    if(!objectManifold){
+        cerr << fileLocation << " not manifold\n";
     }
     return object;
 }
