@@ -1,0 +1,69 @@
+{
+	"configurations" : 
+	[
+		{
+			"directories" : 
+			[
+				{
+					"build" : ".",
+					"jsonFile" : "directory-.-Debug-f5ebdc15457944623624.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.10"
+					},
+					"projectIndex" : 0,
+					"source" : ".",
+					"targetIndexes" : 
+					[
+						0,
+						1
+					]
+				}
+			],
+			"name" : "Debug",
+			"projects" : 
+			[
+				{
+					"directoryIndexes" : 
+					[
+						0
+					],
+					"name" : "chessRendering",
+					"targetIndexes" : 
+					[
+						0,
+						1
+					]
+				}
+			],
+			"targets" : 
+			[
+				{
+					"directoryIndex" : 0,
+					"id" : "chessRenderer::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-chessRenderer-Debug-47049abd84087f518e5b.json",
+					"name" : "chessRenderer",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "supplemental::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-supplemental-Debug-2fa8b776cc1612349367.json",
+					"name" : "supplemental",
+					"projectIndex" : 0
+				}
+			]
+		}
+	],
+	"kind" : "codemodel",
+	"paths" : 
+	{
+		"build" : "/home/danny/Desktop/Projects/computer graphics/Chess-Rendering-Group-Project/build",
+		"source" : "/home/danny/Desktop/Projects/computer graphics/Chess-Rendering-Group-Project"
+	},
+	"version" : 
+	{
+		"major" : 2,
+		"minor" : 6
+	}
+}

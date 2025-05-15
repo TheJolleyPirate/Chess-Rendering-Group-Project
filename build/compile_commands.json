@@ -19,6 +19,12 @@
 },
 {
   "directory": "/home/danny/Desktop/Projects/computer graphics/Chess-Rendering-Group-Project/build",
+  "command": "/usr/bin/g++ -Dsupplemental_EXPORTS -I/usr/include/opencv4 -I/usr/include/eigen3 -I\"/home/danny/Desktop/Projects/computer graphics/Chess-Rendering-Group-Project\" -I\"/home/danny/Desktop/Projects/computer graphics/Chess-Rendering-Group-Project/headerFiles\" -I\"/home/danny/Desktop/Projects/computer graphics/Chess-Rendering-Group-Project/src\" -g -std=gnu++17 -fPIC -o CMakeFiles/supplemental.dir/src/shader.cpp.o -c \"/home/danny/Desktop/Projects/computer graphics/Chess-Rendering-Group-Project/src/shader.cpp\"",
+  "file": "/home/danny/Desktop/Projects/computer graphics/Chess-Rendering-Group-Project/src/shader.cpp",
+  "output": "CMakeFiles/supplemental.dir/src/shader.cpp.o"
+},
+{
+  "directory": "/home/danny/Desktop/Projects/computer graphics/Chess-Rendering-Group-Project/build",
   "command": "/usr/bin/g++ -I/usr/include/eigen3 -I\"/home/danny/Desktop/Projects/computer graphics/Chess-Rendering-Group-Project\" -I\"/home/danny/Desktop/Projects/computer graphics/Chess-Rendering-Group-Project/headerFiles\" -I\"/home/danny/Desktop/Projects/computer graphics/Chess-Rendering-Group-Project/src\" -isystem /usr/include/opencv4 -g -std=gnu++17 -o CMakeFiles/chessRenderer.dir/main.cpp.o -c \"/home/danny/Desktop/Projects/computer graphics/Chess-Rendering-Group-Project/main.cpp\"",
   "file": "/home/danny/Desktop/Projects/computer graphics/Chess-Rendering-Group-Project/main.cpp",
   "output": "CMakeFiles/chessRenderer.dir/main.cpp.o"

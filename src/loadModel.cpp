@@ -345,15 +345,15 @@ void vertexTriangluation(vector<unsigned int>& indices, vector<Vertex>& vertices
     }
 }
 
-Mesh loadFile(std::string Path){
+Mesh loadFile(std::string path){
     // If the file is not an .obj file return false
     Mesh object;
-    if(Path.substr(Path.size() - 4, 4) != ".obj"){
+    if(path.substr(path.size() - 4, 4) != ".obj"){
         string badFile = "file not .obj";
         throw badFile; 
     }
 
-    std::ifstream file(Path);
+    std::ifstream file(path);
 
     if(!file.is_open()){
         string badFile = "can't open file";
@@ -542,7 +542,7 @@ Object meshToHalfEdge(const Mesh& mesh) {
     return object;
 }
 
-Object load(string fileLocation, map<string, string> textureFiles) {
+Object load(string fileLocation) {
     Object object;
     try{
         Mesh obj = loadFile(fileLocation);
@@ -553,30 +553,5 @@ Object load(string fileLocation, map<string, string> textureFiles) {
         std::cerr << "Failed to load OBJ file: " << fileLocation << ", reason: " << message << std::endl;
         return object;
     }
-    auto iter = textureFiles.find("diffuse");
-    if(iter != textureFiles.end()){
-        object.material.diffuseTextureFile = iter->first[1];
-    }
-    auto iter = textureFiles.find("ambiant");
-    if(iter != textureFiles.end()){
-        object.material.ambiantTextureFile = iter->first[1];
-    }
-    auto iter = textureFiles.find("specular");
-    if(iter != textureFiles.end()){
-        object.material.specularTextureFile = iter->first[1];
-    }
-    auto iter = textureFiles.find("shininess");
-    if(iter != textureFiles.end()){
-        object.material.specularShininessTextureFile = iter->first[1];
-    }
-    auto iter = textureFiles.find("opacity");
-    if(iter != textureFiles.end()){
-        object.material.opacityTextureFile = iter->first[1];
-    }
-    auto iter = textureFiles.find("bumpMap");
-    if(iter != textureFiles.end()){
-        object.material.bumpMapTextureFile = iter->first[1];
-    }
-
     return object;
 }
