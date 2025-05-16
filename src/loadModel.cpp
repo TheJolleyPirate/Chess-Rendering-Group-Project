@@ -193,7 +193,7 @@ void genVerticesFromRawOBJ(vector<Vertex> &vertices, const vector<Vector3f> &pos
 
 // Triangulate a list of vertices into a face by printing
 //	inducies corresponding with triangles within it
-void vertexTriangluation(vector<unsigned int>& indices, vector<Vertex>& vertices){
+void vertexTriangluation(vector<unsigned int> &indices, vector<Vertex> &vertices){
     // If there are 2 or less verts,
     // no triangle can be created,
     // so exit
@@ -208,7 +208,7 @@ void vertexTriangluation(vector<unsigned int>& indices, vector<Vertex>& vertices
         return;
     }
 
-    while(true){
+    while(vertices.size() > 2){
         // For every vertex
         for(int i = 0; i < int(vertices.size()); i++){
             // pPrev = the previous vertex in the list
@@ -247,6 +247,7 @@ void vertexTriangluation(vector<unsigned int>& indices, vector<Vertex>& vertices
                     if(vertices[j].position == pNext.position){
                         indices.push_back(j);
                     }
+                    vertices.erase(vertices.begin() + i);
                 }
                 break;
             }
@@ -264,6 +265,7 @@ void vertexTriangluation(vector<unsigned int>& indices, vector<Vertex>& vertices
                     if(vertices[j].position == pNext.position){
                         indices.push_back(j);
                     }
+                    vertices.erase(vertices.begin() + i);
                 }
 
                 Vector3f tempVec;
@@ -285,6 +287,7 @@ void vertexTriangluation(vector<unsigned int>& indices, vector<Vertex>& vertices
                     if (vertices[j].position == tempVec){
                         indices.push_back(j);
                     }
+                    vertices.erase(vertices.begin() + i);
                 }
 
                 break;
@@ -319,6 +322,7 @@ void vertexTriangluation(vector<unsigned int>& indices, vector<Vertex>& vertices
                 if (vertices[j].position == pNext.position){
                     indices.push_back(j);
                 }
+                vertices.erase(vertices.begin() + i);
             }
 
             // Delete pCur from the list
@@ -482,19 +486,17 @@ Mesh loadFile(string path){
         istringstream iss(currentLine);
         string prefix;
         iss >> prefix;
-        cerr << "\ron line " << ++lineNum << " a " << prefix;
         // Generate a Vertex Position
         if(prefix == "v"){
             Vector3f vertex;
             iss >> vertex[0] >> vertex[1] >> vertex[2];
             positions.push_back(vertex);
         }
-        // Generate a Vertex Texture Coordinate
-        else if(prefix == "vt"){
+        if (prefix == "vt"){
             Vector2f vertex;
             iss >> vertex[0] >> vertex[1];;
             tCoords.push_back(vertex);
-        }
+            }
         // Generate a Vertex Normal;
         else if(prefix == "vn"){
             Vector3f vertex;
@@ -540,7 +542,6 @@ Mesh loadFile(string path){
             material = LoadMaterial(directory, matFile);
         }
     }
-    cout << "\n";
     if(!indices.empty() && !vertices.empty()){
         // Create Mesh
         object = Mesh(vertices, indices);
@@ -567,15 +568,8 @@ Object meshToHalfEdge(const Mesh& mesh) {
     meshVertices.reserve(mesh.Vertices.size());
     
     // First pass: create all vertices
-    for (const auto& objVert : mesh.Vertices) {
-        auto vertex = std::make_shared<Vertex>(vertexIdCounter++);
-        vertex->position = Vector3f(objVert.position.x(), objVert.position.y(), objVert.position.z());
-        vertex->normal = Vector3f(objVert.normal.x(), objVert.normal.y(), objVert.normal.z());
-        vertex->textureCoordinates = Vector2f(objVert.textureCoordinates.x(), objVert.textureCoordinates.y());
-        
-        // We'll set the halfEdge pointer later
-        meshVertices.push_back(vertex);
-        object.vertices.push_back(vertex);
+    for (const auto& vertex : mesh.Vertices) {
+        object.vertices.push_back(make_shared<Vertex>(vertex));
     }
     
     // Process faces (triangles in the mesh)
@@ -647,41 +641,31 @@ Object meshToHalfEdge(const Mesh& mesh) {
         Vector3f e2 = v2 - v0;
         face->normal = e1.cross(e2).normalized();
     }
-    
-    // Compute vertex normals
-    for (auto& vertex : object.vertices) {
-        Vector3f normal = Vector3f::Zero();
-        auto half_edges = vertex->neighbourHalfEdges();
-        
-        for (const auto& he : half_edges) {
-            if (he->face) {
-                normal += he->face->normal;
-            }
-        }
-        
-        if (normal != Vector3f::Zero()) {
-            vertex->normal = normal.normalized();
-        } 
-    }
     return object;
 }
 
-Object load(string fileLocation) {
+Object load(string fileLocation, string fileName) {
     Object object;
     try{
         Mesh obj = loadFile(fileLocation);
-        std::cout << "OBJ file loaded successfully: " << fileLocation << std::endl;
+        cout << "OBJ file loaded successfully: " << fileLocation << std::endl;
         object = meshToHalfEdge(obj);
+        cout << "mesh sussfully made for " << fileName << std::endl;
+
     }
     catch(string message){
-        std::cerr << "\nFailed to load OBJ file: " << fileLocation << ", reason: " << message << std::endl;
+        cerr << "\nFailed to load OBJ file: " << fileLocation << ", reason: " << message << std::endl;
         return object;
     }
     if(!objectFacesConsistent){
+        cout << "making " << fileName << " consistently faced: ";
         makeObjectFacesConsistent(object);
+        cout << "success\n";
     }
     if(!objectTri(object)){
+        cout << "making " << fileName << " triangle mesh: ";
         makeObjectTri(object);
+        cout << "success\n";
     }
     if(!objectClosed){
         cerr << fileLocation << " not closed\n";
