@@ -20,6 +20,8 @@ add_library(supplemental SHARED
     src/loadModel.cpp
     src/meshChecker.cpp
     src/rasterizer.cpp
+    src/scene.cpp
+    src/shader.cpp
 )
 
 add_executable(chessRenderer main.cpp)

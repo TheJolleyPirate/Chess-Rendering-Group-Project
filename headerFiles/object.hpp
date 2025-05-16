@@ -4,6 +4,7 @@
 #include <vector>
 #include <Eigen/Dense>
 class Object;
+class Material;
 class Face;
 class HalfEdge;
 class Vertex;
@@ -17,6 +18,7 @@ class HalfEdge{
         std::shared_ptr<Vertex> vertex; //origin vertex
         std::shared_ptr<Face> face;
         HalfEdge(int _id): id(_id){}
+        HalfEdge(){}
 };
 
 class Face{
@@ -24,9 +26,6 @@ class Face{
         int id; //unique within object
         std::weak_ptr<HalfEdge> halfEdge;
         Eigen::Vector3f normal;
-        Eigen::Vector3f colour; //for if object does not have a texture
-        //need to figure out how to represent material
-        //auto material;
         Face(){}
         Face(int _id): id(_id){}
         std::vector<std::shared_ptr<HalfEdge>> getHalfEdges(){
@@ -59,8 +58,8 @@ class Vertex{
         std::weak_ptr<HalfEdge> halfEdge;
         Eigen::Vector3f position;
         Eigen::Vector3f normal;
-        Eigen::Vector3f textureCoordinates;
-        Eigen::Vector3f colour; //if not using texture, in range [0, 255]
+        Eigen::Vector2f textureCoordinates;
+        Eigen::Vector3f colour; //if you are doing colour per vertex
         Vertex(int _id): id(_id){}
         std::vector<std::shared_ptr<Vertex>> getNeighbourVertices(){
             std::vector<std::shared_ptr<Vertex>> neighbourhood;
@@ -80,6 +79,7 @@ class Vertex{
             while(currentHalfEdge->id != halfEdgeId);
             return neighbourhood; 
         }
+        Vertex(){}
 
         // Get all the half edges that originate from this vertex
         std::vector<std::shared_ptr<HalfEdge>> neighbourHalfEdges() {
@@ -108,9 +108,86 @@ class Vertex{
         }
 };
 
+class Material{
+    public:
+        Eigen::Vector3f colour;
+        std::string diffuseTextureFile;
+        //below are optional
+        std::string specularTextureFile;
+        std::string ambiantTextureFile;
+        std::string specularShininessTextureFile;
+        std::string opacityTextureFile; //alpha
+        std::string bumpMapTextureFile;
+        float opacity;
+        float ior; // index of refraction
+        float shininessExponant;// Specular Exponent
+        float lightEmission;
+        float lightAbsorption; //ocular density
+        bool textured;
+        float kd; //diffuse light
+        float ks; //specular light
+        float ka; //ambiant light
+
+        Material(){
+            kd = 0.8;
+            ks = 0.2;
+            ka = kd;
+            shininessExponant = 25;
+            lightEmission = 0;
+            textured=false;
+            ior=2;
+        }
+
+        Material(Eigen::Vector3f _colour){
+            colour = _colour;
+            kd = 0.8;
+            ks = 0.2;
+            ka = kd;
+            shininessExponant = 25;
+            lightEmission = 0;
+            textured=false;
+            ior=2;
+        }
+
+        Material(std::string _diffuseTextureFile){
+            kd = 0.8;
+            ks = 0.2;
+            ka = kd;
+            shininessExponant = 25;
+            lightEmission = 0;
+            textured=true;
+            diffuseTextureFile = _diffuseTextureFile;
+            ior=2;
+        }
+
+        float getKR(const Eigen::Vector3f &incidentPoint, const Eigen::Vector3f &normal){
+            float cosi = std::clamp(-1.0f, 1.0f, incidentPoint.dot(normal));
+            float etai = 1, etat = ior;
+            float kr;
+            if (cosi > 0) {  std::swap(etai, etat); }
+            // Compute sini using Snell's law
+            float sint = etai / etat * sqrtf(std::max(0.f, 1 - cosi * cosi));
+            // Total internal reflection
+            if (sint >= 1) {
+                kr = 1;
+            }
+            else {
+                float cost = sqrtf(std::max(0.f, 1 - sint * sint));
+                cosi = fabsf(cosi);
+                float Rs = ((etat * cosi) - (etai * cost)) / ((etat * cosi) + (etai * cost));
+                float Rp = ((etai * cosi) - (etat * cost)) / ((etai * cosi) + (etat * cost));
+                kr = (Rs * Rs + Rp * Rp) / 2;
+            }
+            // As a consequence of the conservation of energy, transmittance is given by:
+            // kt = 1 - kr;
+            return kr;
+        }
+};
+
 class Object{
     public:
         std::vector<std::shared_ptr<Face>> faces;
         std::vector<std::shared_ptr<HalfEdge>> halfEdges;
         std::vector<std::shared_ptr<Vertex>> vertices;
+        Material material;
 };

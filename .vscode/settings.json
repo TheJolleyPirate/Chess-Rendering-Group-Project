@@ -98,6 +98,9 @@
         "stack": "cpp",
         "__mutex_base": "cpp",
         "__node_handle": "cpp",
-        "filesystem": "cpp"
+        "filesystem": "cpp",
+        "__hash_table": "cpp",
+        "__split_buffer": "cpp",
+        "__tree": "cpp"
     }
 }

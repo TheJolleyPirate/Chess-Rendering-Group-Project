@@ -2,23 +2,27 @@
 #include <object.hpp>
 #include <cfloat>
 
-bool objectClosed(Object object);
+bool objectClosed(const Object &object);
 
-Object makeObjectClosed(Object object);
+void makeObjectClosed(Object &object);
 
-bool facesClosed(Object object);
+bool facesClosed(const Object &object);
 
-bool objectConnected(Object object);
+bool objectConnected(const Object &object);
 
-Object makeObjectConnected(Object object);
+void makeObjectConnected(Object &object);
 
-bool objectManifold(Object object);
+bool objectManifold(const Object &object);
 
-Object makeObjectManifold(Object object);
+void makeObjectManifold(Object &object);
 
-bool objectTri(Object object);
+bool objectFacesConsistent(const Object &object);
 
-Object makeObjectTri(Object object);
+void makeObjectFacesConsistent(Object &object);
+
+bool objectTri(const Object &object);
+
+void makeObjectTri(Object &object);
 
 class Node;
 class Trapezoid;
