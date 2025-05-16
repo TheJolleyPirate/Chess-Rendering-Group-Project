@@ -802,6 +802,8 @@ namespace seidel{
         return origin + (mult * (dest - origin));
     }
     
+    
+
     //Seidel's algorithm for decomposing to trapezoids (quadralaterials)
     vector<vector<Point>> trapodize(const shared_ptr<Face> &face){
         vector<vector<Point>> triangles;
@@ -839,6 +841,9 @@ namespace seidel{
         //and set their validatiy
         vector<shared_ptr<Trapezoid>> trapezoids;
         stack<shared_ptr<Node>> nodeStack;
+        if(!tree){
+            cerr << "seidel root node not initilised\n";
+        }
         nodeStack.push(tree);
         while(!nodeStack.empty()) {
             shared_ptr<Node> node = nodeStack.top(); 
@@ -898,7 +903,6 @@ namespace seidel{
             vector<vector<Point>> currentTriangles = triangulateQuad(leftOrigin, leftDest, rightOrigin, rightDest);
             triangles.insert(triangles.end(), currentTriangles.begin(), currentTriangles.end());
         }
-        
         return triangles;
     }
     
@@ -917,7 +921,7 @@ namespace seidel{
         }
         //get all edge pairs which aren't neighbours
         for(int i = 0; i < halfEdges.size(); ++i){
-            for(int j = 0; j < halfEdges.size(); ++j){
+            for(int j = i + 1; j < halfEdges.size(); ++j){
                 //check to make sure halfedges are not neighbours
                 if(halfEdges[i]->next->id == halfEdges[j]->id || halfEdges[j]->next->id == halfEdges[i]->id){
                     continue;
@@ -995,6 +999,7 @@ namespace seidel{
         auto current = HalfEdge;
         int startID = current->id;
         int numEdges = 0;
+        int selfIntersectAmount = selfIntersectChecker(face).size();
         do{
             current = current->next;
             numEdges += 1;
@@ -1008,7 +1013,7 @@ namespace seidel{
             triangles.push_back({a, b, c});
         }
         //if it is a quad and has no self intersections use basic quad triangulation
-        else if (numEdges == 4 && selfIntersectChecker(face).size() == 0){
+        else if (numEdges == 4){// && selfIntersectAmount == 0){
             //for left and right edges all that matters is that they are opposite edges actual orientation doesn't matter
             Point leftOrigin = Point(HalfEdge->vertex);
             Point leftDest = Point(HalfEdge->next->vertex);
@@ -1099,7 +1104,6 @@ void makeObjectTri(Object &object){
             faces.push_back(face);
         }
     };
-
     for(int i = 0; i < object.faces.size(); ++i){
         makeFaceTri(object.faces[i]);
     }

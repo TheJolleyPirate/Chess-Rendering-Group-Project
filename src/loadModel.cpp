@@ -12,21 +12,17 @@
 using namespace std;
 using namespace Eigen;
 
-struct Mesh
-    {
-        // Default Constructor
-        Mesh(){}
-        // Variable Set Constructor
-        Mesh(std::vector<Vertex>& _Vertices, std::vector<unsigned int>& _Indices){
-            Vertices = _Vertices;
-            Indices = _Indices;
-        }
-        // Vertex List
-        std::vector<Vertex> Vertices;
-        // Index List
-        std::vector<unsigned int> Indices;
-        Material material;
-    };
+struct RawVertex{
+    Vector3f position;
+    Vector3f normal;
+    Vector2f textureCoords;
+};
+
+struct Mesh{
+    vector<RawVertex> vertices;
+    vector<vector<int>> faces;
+    Material material;
+};
 
 vector<string> split (const string &s, const char delim){
     vector<string> result;
@@ -41,7 +37,7 @@ vector<string> split (const string &s, const char delim){
 
 template <class T>
 inline const T & getElement(const vector<T> &elements, string &stringIndex){
-    int index = std::stoi(stringIndex);
+    int index = stoi(stringIndex);
     if (index < 0){
         index = int(elements.size()) + index;
     }
@@ -93,259 +89,63 @@ bool inTriangle(Vector3f point, Vector3f tri1, Vector3f tri2, Vector3f tri3){
         return false;
 }
 
-// Generate vertices from a list of positions,
-//	tcoords, normals and a face line
-void genVerticesFromRawOBJ(vector<Vertex> &vertices, const vector<Vector3f> &positions, const vector<Vector2f> &tCoords, 
-        const vector<Vector3f> &normals, vector<string> face){
-    vector<string> stringVertex;
-    Vertex vertex;
+tuple <vector<RawVertex>, vector<int>> getVertexInfo(vector<string> face, const vector<Vector3f> &positions, const vector<Vector2f> &tCoords, const vector<Vector3f> &normals){
+    vector<RawVertex> vertices;
+    vector<int> verticesIndex;
     bool noNormal = false;
-
-    // For every given vertex do this
-    for (int i = 0; i < int(face.size()); i++){
-        // See What type the vertex is.
-        int vtype;
+    for(string stringVertex : face){
+        RawVertex vertex;
+        int positionIndex;
+        int vertexType;
         char delim = '/';
-        stringVertex = split(face[i], delim);
-
+        vector<string> parts = split(stringVertex, delim);
         // Check for just position - v1
-        if (stringVertex.size() == 1){
-            // Only position
-            vtype = 1;
+        if (parts.size() == 1){
+            vertex.position = getElement(positions, parts[0]);
+            vertex.textureCoords = Vector2f(0, 0);
+            noNormal = true;
+            vertices.push_back(vertex);
+            verticesIndex.push_back(stoi(parts[0]));
         }
-
         // Check for position & texture - v1/vt1
-        else if (stringVertex.size() == 2){
-            // Position & Texture
-            vtype = 2;
+        else if (parts.size() == 2){
+            vertex.position = getElement(positions, parts[0]);
+            vertex.textureCoords = getElement(tCoords, parts[1]);
+            noNormal = true;
+            vertices.push_back(vertex);
+            verticesIndex.push_back(stoi(parts[0]));
         }
-
         // Check for Position, Texture and Normal - v1/vt1/vn1
         // or if Position and Normal - v1//vn1
-        else if (stringVertex.size() == 3){
-            if (stringVertex[1] != "")
+        else if (parts.size() == 3){
+            if (parts[1] != "")
             {
-                // Position, Texture, and Normal
-                vtype = 4;
+                vertex.position = getElement(positions, parts[0]);
+                vertex.textureCoords = getElement(tCoords, parts[1]);
+                vertex.normal = getElement(normals, parts[2]);
+                vertices.push_back(vertex);
+                verticesIndex.push_back(stoi(parts[0]));
             }
             else
             {
-                // Position & Normal
-                vtype = 3;
-            }
-        }
-
-        // Calculate and store the vertex
-        switch (vtype){
-            case 1: // P
-            {
-                vertex.position = getElement(positions, stringVertex[0]);
-                vertex.textureCoordinates = Vector2f(0, 0);
-                noNormal = true;
+                vertex.position = getElement(positions, parts[0]);
+                vertex.textureCoords = Vector2f(0, 0);
+                vertex.normal = getElement(normals, parts[2]);
                 vertices.push_back(vertex);
-                break;
-            }
-            case 2: // P/T
-            {
-                vertex.position = getElement(positions, stringVertex[0]);
-                vertex.textureCoordinates = getElement(tCoords, stringVertex[1]);
-                noNormal = true;
-                vertices.push_back(vertex);
-                break;
-            }
-            case 3: // P//N
-            {
-                vertex.position = getElement(positions, stringVertex[0]);
-                vertex.textureCoordinates = Vector2f(0, 0);
-                vertex.normal = getElement(normals, stringVertex[2]);
-                vertices.push_back(vertex);
-                break;
-            }
-            case 4: // P/T/N
-            {
-                vertex.position = getElement(positions, stringVertex[0]);
-                vertex.textureCoordinates = getElement(tCoords, stringVertex[1]);
-                vertex.normal = getElement(normals, stringVertex[2]);
-                vertices.push_back(vertex);
-                break;
-            }
-            default:
-            {
-                break;
+                verticesIndex.push_back(stoi(parts[0]));
             }
         }
     }
-
-    // take care of missing normals
-    // these may not be truly acurate but it is the
-    // best they get for not compiling a mesh with normals
     if (noNormal){
         Vector3f a = vertices[0].position - vertices[1].position;
         Vector3f b = vertices[2].position - vertices[1].position;
-
         Vector3f normal = a.cross(b);
 
         for (int i = 0; i < vertices.size(); i++){
             vertices[i].normal = normal;
         }
     }
-}
-
-// Triangulate a list of vertices into a face by printing
-//	inducies corresponding with triangles within it
-void vertexTriangluation(vector<unsigned int> &indices, vector<Vertex> &vertices){
-    // If there are 2 or less verts,
-    // no triangle can be created,
-    // so exit
-    if(vertices.size() < 3){
-        return;
-    }
-    // If it is a triangle no need to calculate it
-    if(vertices.size() == 3){
-        indices.push_back(0);
-        indices.push_back(1);
-        indices.push_back(2);
-        return;
-    }
-
-    while(vertices.size() > 2){
-        // For every vertex
-        for(int i = 0; i < int(vertices.size()); i++){
-            // pPrev = the previous vertex in the list
-            Vertex pPrev;
-            if(i == 0){
-                pPrev = vertices[vertices.size() - 1];
-            }
-            else{
-                pPrev = vertices[i - 1];
-            }
-
-            // pCur = the current vertex;
-            Vertex pCur = vertices[i];
-
-            // pNext = the next vertex in the list
-            Vertex pNext;
-            if(i == vertices.size() - 1){
-                pNext = vertices[0];
-            }
-            else{
-                pNext = vertices[i + 1];
-            }
-
-            // Check to see if there are only 3 verts left
-            // if so this is the last triangle
-            if(vertices.size() == 3){
-                // Create a triangle from pCur, pPrev, pNext
-                for (int j = 0; j < int(vertices.size()); j++){
-                    if (vertices[j].position == pCur.position){
-                        indices.push_back(j);
-                    }
-                    if(vertices[j].position == pPrev.position){
-                        indices.push_back(j);
-
-                    }
-                    if(vertices[j].position == pNext.position){
-                        indices.push_back(j);
-                    }
-                    vertices.erase(vertices.begin() + i);
-                }
-                break;
-            }
-            if (vertices.size() == 4){
-                // Create a triangle from pCur, pPrev, pNext
-                for (int j = 0; j < int(vertices.size()); j++)
-                {
-                    if (vertices[j].position == pCur.position){
-                        indices.push_back(j);
-                    }
-                    if(vertices[j].position == pPrev.position){
-                        indices.push_back(j);
-
-                    }
-                    if(vertices[j].position == pNext.position){
-                        indices.push_back(j);
-                    }
-                    vertices.erase(vertices.begin() + i);
-                }
-
-                Vector3f tempVec;
-                for (int j = 0; j < int(vertices.size()); j++){
-                    if (vertices[j].position != pCur.position && vertices[j].position != pPrev.position && vertices[j].position != pNext.position){
-                        tempVec = vertices[j].position;
-                        break;
-                    }
-                }
-
-                // Create a triangle from pCur, pPrev, pNext
-                for (int j = 0; j < int(vertices.size()); j++){
-                    if (vertices[j].position == pPrev.position){
-                        indices.push_back(j);
-                    }
-                    if (vertices[j].position == pNext.position){
-                        indices.push_back(j);
-                    }
-                    if (vertices[j].position == tempVec){
-                        indices.push_back(j);
-                    }
-                    vertices.erase(vertices.begin() + i);
-                }
-
-                break;
-            }
-
-            // If Vertex is not an interior vertex
-            float angle = angleBetweenV3(pPrev.position - pCur.position, pNext.position - pCur.position) * (180 / 3.14159265359);
-            if (angle <= 0 && angle >= 180)
-                continue;
-
-            // If any vertices are within this triangle
-            bool inTri = false;
-            for (int j = 0; j < int(vertices.size()); j++){
-                bool temp = inTriangle(vertices[j].position, pPrev.position, pCur.position, pNext.position);
-                if (temp && vertices[j].position != pPrev.position && vertices[j].position != pCur.position && vertices[j].position != pNext.position){
-                    inTri = true;
-                    break;
-                }
-            }
-            if (inTri){
-                continue;
-            }
-
-            // Create a triangle from pCur, pPrev, pNext
-            for (int j = 0; j < int(vertices.size()); j++){
-                if (vertices[j].position == pCur.position){
-                    indices.push_back(j);
-                }
-                if (vertices[j].position == pPrev.position){
-                    indices.push_back(j);
-                }
-                if (vertices[j].position == pNext.position){
-                    indices.push_back(j);
-                }
-                vertices.erase(vertices.begin() + i);
-            }
-
-            // Delete pCur from the list
-            for (int j = 0; j < int(vertices.size()); j++){
-                if (vertices[j].position == pCur.position){
-                    vertices.erase(vertices.begin() + j);
-                    break;
-                }
-            }
-
-            // reset i to the start
-            // -1 since loop will add 1 to it
-            i = -1;
-        }
-
-        // if no triangles were created
-        if (indices.size() == 0)
-            break;
-
-        // if no more vertices
-        if (vertices.size() == 0)
-            break;
-    }
+    return make_tuple(vertices, verticesIndex);
 }
 
 Material LoadMaterial(string path, string fileName){
@@ -457,7 +257,7 @@ Material LoadMaterial(string path, string fileName){
 Mesh loadFile(string path){
     // If the file is not an .obj file return false
     cerr << "entered loadFile\n";
-    Mesh object;
+    Mesh mesh;
     Material material;
     if(path.substr(path.size() - 4, 4) != ".obj"){
         string badFile = "file not .obj ";
@@ -476,10 +276,8 @@ Mesh loadFile(string path){
     vector<Vector3f> positions;
     vector<Vector2f> tCoords;
     vector<Vector3f> normals;
-    vector<Vertex> vertices;
-    vector<unsigned int> indices;
-    vector<std::string> meshMatNames;
-    Mesh tempMesh;
+    vector<RawVertex> vertices;
+    vector<vector<int>> faces;
     string currentLine;
     int lineNum = 0;
     while(getline(file, currentLine)){
@@ -507,27 +305,19 @@ Mesh loadFile(string path){
         // Generate a Face (vertices & indices)
         else if(prefix == "f"){
             // Generate the vertices
-            std::vector<Vertex> verts;
-            vector<string> face;
+            vector<RawVertex> verts;
+            vector<string> stringFace;
             for(string vertData; iss >> vertData;){
-                face.push_back(vertData);
+                stringFace.push_back(vertData);
             }
-            genVerticesFromRawOBJ(verts, positions, tCoords, normals, face);
+            auto [rawVertices, face] = getVertexInfo(stringFace, positions, tCoords, normals);
 
             // Add Vertices
-            for(int i = 0; i < int(verts.size()); i++){
-                vertices.push_back(verts[i]);
+            for(int i = 0; i < int(rawVertices.size()); i++){
+                vertices.push_back(rawVertices[i]);
             }
-
-            std::vector<unsigned int> iIndices;
-
-            vertexTriangluation(iIndices, verts);
-
-            // Add Indices
-            for(int i = 0; i < int(iIndices.size()); i++){
-                unsigned int indnum = (unsigned int)((vertices.size()) - verts.size()) + iIndices[i];
-                indices.push_back(indnum);
-            }
+            //add face
+            faces.push_back(face);
         }
         else if(prefix == "usemtl"){
             string matFile;
@@ -542,104 +332,93 @@ Mesh loadFile(string path){
             material = LoadMaterial(directory, matFile);
         }
     }
-    if(!indices.empty() && !vertices.empty()){
-        // Create Mesh
-        object = Mesh(vertices, indices);
-        object.material = material;
-    }
+    mesh.vertices = vertices;
+    mesh.faces = faces;
+    mesh.material = material;
 
     file.close();
-    return object;
+    return mesh;
 }
 
 Object meshToHalfEdge(const Mesh& mesh) {
     Object object;
     object.material = mesh.material;
-    // Map to keep track of edges for setting up twins later
-    // Key: pair of vertex indices (smaller index first), Value: half-edge pointer
-    std::map<std::pair<int, int>, std::shared_ptr<HalfEdge>> edgeMap;
-    
+
+    vector<shared_ptr<Vertex>> vertices(mesh.vertices.size(), nullptr);
+    vector<shared_ptr<HalfEdge>> halfEdges;
     int vertexIdCounter = 0;
     int halfEdgeIdCounter = 0;
     int faceIdCounter = 0;
-    
-    // Create vertices from mesh
-    std::vector<std::shared_ptr<Vertex>> meshVertices;
-    meshVertices.reserve(mesh.Vertices.size());
-    
-    // First pass: create all vertices
-    for (const auto& vertex : mesh.Vertices) {
-        object.vertices.push_back(make_shared<Vertex>(vertex));
+    map<int, vector<shared_ptr<HalfEdge>>> halfEdgesByDestination;
+
+    for(int i = 0; i < mesh.vertices.size(); ++i){
+        shared_ptr<Vertex> vertex = make_shared<Vertex>(vertexIdCounter++);
+        vertex->position = mesh.vertices[i].position;
+        vertex->normal = mesh.vertices[i].normal;
+        vertex->textureCoordinates = mesh.vertices[i].textureCoords;
+        // We'll set the halfEdge pointer later
+        vertices[i] = vertex;
+        object.vertices.push_back(vertex);
     }
-    
-    // Process faces (triangles in the mesh)
-    for (size_t i = 0; i < mesh.Indices.size(); i += 3) {
-        auto face = std::make_shared<Face>(faceIdCounter++);
-        object.faces.push_back(face);
-                    
-        // Create three half-edges for this triangle
-        std::shared_ptr<HalfEdge> he[3];
-        for (int j = 0; j < 3; j++) {
-            he[j] = std::make_shared<HalfEdge>(halfEdgeIdCounter++);
-            object.halfEdges.push_back(he[j]);
-            
-            // Set face for each half-edge
-            he[j]->face = face;
-        }
-        
-        // Connect the half-edges in a cycle and set up vertices
-        for (int j = 0; j < 3; j++) {
-            // Set the vertices for each half-edge
-            int vertexIndex = mesh.Indices[i + j];
-            he[j]->vertex = meshVertices[vertexIndex];
-            
-            // Set pointers for next and previous
-            he[j]->next = he[(j + 1) % 3];
-            he[j]->previous = he[(j + 2) % 3];
-            
-            // Update vertex's outgoing half-edge if not already set
-            if (!he[j]->vertex->halfEdge.lock()) {
-                he[j]->vertex->halfEdge = he[j];
-            }
-            
-            // Store the half-edge for twin setup
-            int nextIndex = mesh.Indices[i + (j + 1) % 3];
-            
-            // Always use smaller vertex id first to ensure consistent mapping
-            int v1 = vertexIndex;
-            int v2 = nextIndex;
-            if (v1 > v2) std::swap(v1, v2);
-            
-            auto edgePair = std::make_pair(v1, v2);
-            
-            // If this edge already exists in our map, we've found twins
-            auto it = edgeMap.find(edgePair);
-            if (it != edgeMap.end()) {
-                // We found the twin! Link them together
-                std::shared_ptr<HalfEdge> twin = it->second;
-                
-                // Determine if they actually are twins (direction is opposite)
-                if (twin->vertex->id != nextIndex) {
-                    // Set the twin relationships
-                    he[j]->twin = twin;
-                    twin->twin = he[j];
+
+    for(vector<int> faceIndices : mesh.faces){
+        shared_ptr<Face> face = make_shared<Face>(Face(faceIdCounter++));
+        shared_ptr<HalfEdge> previous = nullptr;
+        shared_ptr<Vertex> firstVertex;
+        shared_ptr<HalfEdge> firstHalfEdge;
+
+        for(int vertexIndex: faceIndices){
+            shared_ptr<HalfEdge> halfEdge = make_shared<HalfEdge>(HalfEdge(faceIdCounter++));
+            if(previous != nullptr){
+                previous->next = halfEdge;
+                halfEdge->previous = previous;
+                if (halfEdgesByDestination.find(vertexIndex) == halfEdgesByDestination.end()){
+                    halfEdgesByDestination.insert({vertexIndex, vector<shared_ptr<HalfEdge>>()});
                 }
-            } else {
-                // Store this half-edge for future twin finding
-                edgeMap[edgePair] = he[j];
+                halfEdgesByDestination[vertexIndex].push_back(previous);
             }
+            else{
+                firstHalfEdge = halfEdge;
+            }
+            halfEdge->vertex = vertices[vertexIndex];
+            halfEdge->face = face;
+            halfEdges.push_back(halfEdge);
+            object.halfEdges.push_back(halfEdge);
+            previous = halfEdge;
         }
-        
-        // Set face's half-edge pointer to one of its half-edges
-        face->halfEdge = he[0];
-        
+
+        previous->next = firstHalfEdge;
+        firstHalfEdge->previous = previous;
+        int id = firstHalfEdge->vertex->id;
+        if (halfEdgesByDestination.find(id) == halfEdgesByDestination.end()){
+            halfEdgesByDestination.insert({id, vector<shared_ptr<HalfEdge>>()});
+        }
+        halfEdgesByDestination[id].push_back(previous);
+        face->halfEdge = firstHalfEdge;
+        object.faces.push_back(face);
         // Calculate face normal
-        Vector3f v0 = he[0]->vertex->position;
-        Vector3f v1 = he[1]->vertex->position;
-        Vector3f v2 = he[2]->vertex->position;
+        Vector3f v0 = halfEdges[0]->vertex->position;
+        Vector3f v1 = halfEdges[1]->vertex->position;
+        Vector3f v2 = halfEdges[2]->vertex->position;
         Vector3f e1 = v1 - v0;
         Vector3f e2 = v2 - v0;
         face->normal = e1.cross(e2).normalized();
+    }
+    for(shared_ptr<HalfEdge> halfEdge : halfEdges){
+        shared_ptr<HalfEdge> twin = halfEdge->twin.lock();
+        if(!twin){
+            int origin = halfEdge->vertex->id;
+            int destination = halfEdge->next->vertex->id;
+            for (shared_ptr<HalfEdge> twin : halfEdgesByDestination[origin]){
+                if(twin->vertex->id == destination){
+                    if(!twin->twin.lock()){
+                        halfEdge->twin = twin;
+                        twin->twin = halfEdge;
+                        break;
+                    }
+                }
+            }
+        }
     }
     return object;
 }
@@ -647,32 +426,37 @@ Object meshToHalfEdge(const Mesh& mesh) {
 Object load(string fileLocation, string fileName) {
     Object object;
     try{
-        Mesh obj = loadFile(fileLocation);
+        Mesh mesh = loadFile(fileLocation);
         cout << "OBJ file loaded successfully: " << fileLocation << std::endl;
-        object = meshToHalfEdge(obj);
-        cout << "mesh sussfully made for " << fileName << std::endl;
+        object = meshToHalfEdge(mesh);
+        cout << "mesh successfully made for " << fileName << std::endl;
 
     }
     catch(string message){
         cerr << "\nFailed to load OBJ file: " << fileLocation << ", reason: " << message << std::endl;
         return object;
     }
+    cout << "checking consistency\n";
     if(!objectFacesConsistent){
-        cout << "making " << fileName << " consistently faced: ";
+        cout << "making " << fileName << " consistently faced: " << flush;
         makeObjectFacesConsistent(object);
         cout << "success\n";
     }
+    cout << "checking if object tri\n";
     if(!objectTri(object)){
-        cout << "making " << fileName << " triangle mesh: ";
+        cout << "making " << fileName << " triangle mesh: " << flush;
         makeObjectTri(object);
         cout << "success\n";
     }
+    cout << "checking closed\n";
     if(!objectClosed){
         cerr << fileLocation << " not closed\n";
     }
+    cout << "checking connected\n";
     if(!objectConnected){
         cerr << fileLocation << " not fully connected\n";
     }
+    cout << "checking manifold\n";
     if(!objectManifold){
         cerr << fileLocation << " not manifold\n";
     }
