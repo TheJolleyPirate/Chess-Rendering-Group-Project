@@ -31,7 +31,7 @@ void loadModel(map<string, Object> &objects, string fileLocation){
         throw badInput;
     }
     cout << "mesh name: " << fileName << "\n";
-    Object object = load(fileLocation);
+    Object object = load(fileLocation, fileName);
     objects[fileName] = object;
 }
 

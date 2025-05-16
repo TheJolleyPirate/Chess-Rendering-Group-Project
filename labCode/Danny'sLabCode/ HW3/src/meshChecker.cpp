@@ -43,13 +43,7 @@ tuple<vector<Vector3f>, vector<vector<int>>, int> loadDubiousOBJ(const string& f
             displayVertices.push_back(vertex);
         } else if ("f" == prefix) {
             vector<int> face;
-            for(string vertData; iss >> vertData;){
-                //as we are not doing anything with textures or normals
-                //ignore texture and normal data
-                char delim = '/';
-                std::string vertex = split(vertData, delim)[0];
-                face.push_back(stoi(vertex));
-            }
+            for(string vertData; iss >> vertex
             if(face.size() > meshType){
                 meshType = face.size();
             }
