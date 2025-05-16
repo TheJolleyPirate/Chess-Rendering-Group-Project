@@ -1,7 +1,7 @@
 {
     "objects": [
         {
-            "model": "Stone_Chess_Board.obj",
+            "model": "board.obj",
             "position": [
                 0.0,
                 0.0,
@@ -19,7 +19,7 @@
             ]
         },
         {
-            "model": "Wooden_Chess_Pawn_Side_B_V2_L3.obj",
+            "model": "pawn.obj",
             "position": [
                 -3.5,
                 0.0,
@@ -37,7 +37,7 @@
             ]
         },
         {
-            "model": "Wooden_Chess_Pawn_Side_B_V2_L3.obj",
+            "model": "pawn.obj",
             "position": [
                 -2.5,
                 0.0,
@@ -55,7 +55,7 @@
             ]
         },
         {
-            "model": "Wooden_Chess_Pawn_Side_B_V2_L3.obj",
+            "model": "pawn.obj",
             "position": [
                 -1.5,
                 0.0,
@@ -73,7 +73,7 @@
             ]
         },
         {
-            "model": "Wooden_Chess_Pawn_Side_B_V2_L3.obj",
+            "model": "pawn.obj",
             "position": [
                 -0.5,
                 0.0,
@@ -91,7 +91,7 @@
             ]
         },
         {
-            "model": "Wooden_Chess_Pawn_Side_B_V2_L3.obj",
+            "model": "pawn.obj",
             "position": [
                 0.5,
                 0.0,
@@ -109,7 +109,7 @@
             ]
         },
         {
-            "model": "Wooden_Chess_Pawn_Side_B_V2_L3.obj",
+            "model": "pawn.obj",
             "position": [
                 1.5,
                 0.0,
@@ -127,7 +127,7 @@
             ]
         },
         {
-            "model": "Wooden_Chess_Pawn_Side_B_V2_L3.obj",
+            "model": "pawn.obj",
             "position": [
                 2.5,
                 0.0,
@@ -145,7 +145,7 @@
             ]
         },
         {
-            "model": "Wooden_Chess_Pawn_Side_B_V2_L3.obj",
+            "model": "pawn.obj",
             "position": [
                 3.5,
                 0.0,
@@ -163,7 +163,7 @@
             ]
         },
         {
-            "model": "Wooden_Chess_King_Side_A_v1_l3.obj",
+            "model": "king.obj",
             "position": [
                 0.0,
                 0.0,

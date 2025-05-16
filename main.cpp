@@ -20,16 +20,18 @@ using namespace Eigen;
 using namespace filesystem;
 
 void loadModel(map<string, Object> &objects, string fileLocation){
+    cout << "loading model: " << fileLocation << "\n";
     char delim = '/';
     vector<string> fileSplit = split(fileLocation, delim);
     string fileName = fileSplit.back();
     delim = '.';
     fileName = split(fileName, delim)[0];
-    Object object = load(fileLocation);
     if(objects.count(fileName) > 0){
         string badInput = "multiple files with the same name";
         throw badInput;
     }
+    cout << "mesh name: " << fileName << "\n";
+    Object object = load(fileLocation);
     objects[fileName] = object;
 }
 
@@ -41,13 +43,26 @@ map<string, Object> loadModels(vector<string> files){
     return objects;
 }
 
+void getFiles(vector<string> &files, string folder){
+    for (auto &entry : directory_iterator(folder)){
+        if(entry.is_directory()){
+            getFiles(files, entry.path());
+        }
+        else{
+            string file = entry.path();
+            if(file.substr(file.size() - 4, 4) == ".obj"){
+                files.push_back(file);
+            }
+        }
+    }
+}
+
 map<string, Object> loadModels(string folder){
     map<string, Object> objects;
-    for (auto &entry : directory_iterator(folder)){
-        string file = entry.path();
-        if(file.substr(file.size() - 4, 4) == ".obj"){
-            loadModel(objects, file);
-        }
+    vector<string> files;
+    getFiles(files, folder);
+    for(string file : files){
+        loadModel(objects, file);
     }
     return objects;
 }
@@ -69,17 +84,34 @@ void renderScene(Scene scene){
     // Set up rasterizer
     rst::Rasterizer r(512, 512);
     r.clear(rst::Buffers::Colour | rst::Buffers::Depth);
-    //r.setView(camera.getViewMatrix());
-    //r.setProjection(camera.getProjectionMatrix());
+    r.setView(camera.getViewMatrix());
+    r.setProjection(camera.getProjectionMatrix());
     r.setFragmentShader(active_shader);
     // Draw objects
     r.rasterizeObjects(scene);
+    cv::Mat image(700, 700, CV_32FC3, r.frame_buffer().data());
+    image.convertTo(image, CV_8UC3, 1.0f);
+    cv::cvtColor(image, image, cv::COLOR_RGB2BGR);
+    cv::imshow("image", image);
+    cv::imwrite("output.png", image);
 
 }
 
 int main(){
-    std::map<std::string, Object> objects = loadModels("../Models");
-    Scene scene = buildScene(objects);
-    renderScene(scene);
+    try{
+        cout << "loading models\n";
+        std::map<std::string, Object> objects = loadModels("../Models");
+        cout << "models loaded\n";
+        cout << "building scene\n";
+        Scene scene = buildScene(objects);
+        cout << "scene built\n";
+        cout << "rendering scene\n";
+        renderScene(scene);
+        cout << "scene rendered\n";
+    }
+    catch(string message){
+        cerr << "exception occurred, message: " << message << "\n";
+    }
+    
     return 0;
 }

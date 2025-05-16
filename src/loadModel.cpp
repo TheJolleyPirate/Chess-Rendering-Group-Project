@@ -21,18 +21,17 @@ struct Mesh
             Vertices = _Vertices;
             Indices = _Indices;
         }
-        // Mesh Name
-        std::string MeshName;
         // Vertex List
         std::vector<Vertex> Vertices;
         // Index List
         std::vector<unsigned int> Indices;
+        Material material;
     };
 
-std::vector<std::string> split (const std::string &s, const char delim){
-    std::vector<std::string> result;
-    std::stringstream ss (s);
-    std::string item;
+vector<string> split (const string &s, const char delim){
+    vector<string> result;
+    stringstream ss (s);
+    string item;
 
     while (getline (ss, item, delim)) {
         result.push_back (item);
@@ -345,18 +344,128 @@ void vertexTriangluation(vector<unsigned int>& indices, vector<Vertex>& vertices
     }
 }
 
-Mesh loadFile(std::string path){
+Material LoadMaterial(string path, string fileName){
+    if(fileName.substr(fileName.size() - 4, 4) != ".mtl"){
+        fileName.append(".mtl");
+    }
+    std::ifstream file(path + fileName);
+    if(!file.is_open()){
+        string badFile = "can't open file ";
+        badFile.append(path);
+        throw badFile; 
+    }
+
+    Material material;
+    // Go through each line looking for material variables
+    string currentLine;
+    while (getline(file, currentLine)){
+        // new material and material name
+        istringstream iss(currentLine);
+        string prefix;
+        iss >> prefix;
+        // Ambient Color
+        if (prefix == "Ka"){
+            Vector3f light;
+            iss >> light[0] >> light[1] >> light[2];
+            material.ka = light;
+        }
+        // Diffuse Color
+        if (prefix == "Kd"){
+            Vector3f light;
+            iss >> light[0] >> light[1] >> light[2];
+            material.kd = light;
+        }
+        // Specular Color
+        if (prefix == "Ks"){
+            Vector3f light;
+            iss >> light[0] >> light[1] >> light[2];
+            material.ks = light;
+        }
+        // Specular Exponent
+        if (prefix == "Ns"){
+            float ns;
+            iss >> ns;
+            material.shininessExponant = ns;
+        }
+        // Optical Density
+        if (prefix == "Ni"){
+            float ni;
+            iss >> ni;
+            material.lightAbsorption = ni;
+        }
+        // Dissolve
+        if (prefix == "d"){
+            //don't know what dissolve is or if we need it/
+        }
+        // Illumination
+        if (prefix == "illum"){
+            float illum;
+            iss >> illum;
+            material.lightEmission = illum;
+        }
+        // Ambient Texture Map
+        if (prefix == "map_Ka"){
+            string map;
+            iss >> map;
+            map = path + map; 
+            material.ambiantTextureFile = map;
+        }
+        // Diffuse Texture Map
+        if (prefix == "map_Kd"){
+            string map;
+            iss >> map;
+            map = path + map; 
+            material.diffuseTextureFile = map;
+        }
+        // Specular Texture Map
+        if (prefix == "map_Ks"){
+            string map;
+            iss >> map;
+            map = path + map; 
+            material.specularTextureFile = map;
+        }
+        // Specular Hightlight Map
+        if (prefix == "map_Ns"){
+            string map;
+            iss >> map;
+            map = path + map; 
+            material.specularShininessTextureFile = map;
+        }
+        // Alpha Texture Map
+        if (prefix == "map_d"){
+            string map;
+            iss >> map;
+            map = path + map; 
+            material.opacityTextureFile = map;
+        }
+        // Bump Map
+        if (prefix == "map_Bump" || prefix == "map_bump" || prefix == "bump")
+        {
+            string map;
+            iss >> map;
+            map = path + map; 
+            material.bumpMapTextureFile = map;
+        }
+    }
+    return material;
+}
+
+Mesh loadFile(string path){
     // If the file is not an .obj file return false
+    cerr << "entered loadFile\n";
     Mesh object;
+    Material material;
     if(path.substr(path.size() - 4, 4) != ".obj"){
-        string badFile = "file not .obj";
+        string badFile = "file not .obj ";
+        badFile.append(path);
         throw badFile; 
     }
 
     std::ifstream file(path);
 
     if(!file.is_open()){
-        string badFile = "can't open file";
+        string badFile = "can't open file ";
+        badFile.append(path);
         throw badFile; 
     }
 
@@ -368,10 +477,12 @@ Mesh loadFile(std::string path){
     vector<std::string> meshMatNames;
     Mesh tempMesh;
     string currentLine;
+    int lineNum = 0;
     while(getline(file, currentLine)){
         istringstream iss(currentLine);
         string prefix;
         iss >> prefix;
+        cerr << "\ron line " << ++lineNum << " a " << prefix;
         // Generate a Vertex Position
         if(prefix == "v"){
             Vector3f vertex;
@@ -416,11 +527,24 @@ Mesh loadFile(std::string path){
                 indices.push_back(indnum);
             }
         }
+        else if(prefix == "usemtl"){
+            string matFile;
+            iss >> matFile;
+            string directory;
+            const size_t lastSlashIndex = path.rfind('/');
+            if (std::string::npos != lastSlashIndex)
+            {
+                directory = path.substr(0, lastSlashIndex);
+            }
+            directory += "/";
+            material = LoadMaterial(directory, matFile);
+        }
     }
-
+    cout << "\n";
     if(!indices.empty() && !vertices.empty()){
         // Create Mesh
         object = Mesh(vertices, indices);
+        object.material = material;
     }
 
     file.close();
@@ -429,7 +553,7 @@ Mesh loadFile(std::string path){
 
 Object meshToHalfEdge(const Mesh& mesh) {
     Object object;
-    
+    object.material = mesh.material;
     // Map to keep track of edges for setting up twins later
     // Key: pair of vertex indices (smaller index first), Value: half-edge pointer
     std::map<std::pair<int, int>, std::shared_ptr<HalfEdge>> edgeMap;
@@ -550,7 +674,7 @@ Object load(string fileLocation) {
         object = meshToHalfEdge(obj);
     }
     catch(string message){
-        std::cerr << "Failed to load OBJ file: " << fileLocation << ", reason: " << message << std::endl;
+        std::cerr << "\nFailed to load OBJ file: " << fileLocation << ", reason: " << message << std::endl;
         return object;
     }
     if(!objectFacesConsistent){

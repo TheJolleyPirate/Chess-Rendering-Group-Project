@@ -124,40 +124,20 @@ class Material{
         float lightEmission;
         float lightAbsorption; //ocular density
         bool textured;
-        float kd; //diffuse light
-        float ks; //specular light
-        float ka; //ambiant light
+        Eigen::Vector3f kd; //diffuse light
+        Eigen::Vector3f ks; //specular light
+        Eigen::Vector3f ka; //ambiant light
 
         Material(){
-            kd = 0.8;
-            ks = 0.2;
+            kd = {0.8, 0.8, 0.8};
+            ks = {0.2, 0.2, 0.2};
             ka = kd;
             shininessExponant = 25;
             lightEmission = 0;
-            textured=false;
-            ior=2;
-        }
-
-        Material(Eigen::Vector3f _colour){
-            colour = _colour;
-            kd = 0.8;
-            ks = 0.2;
-            ka = kd;
-            shininessExponant = 25;
-            lightEmission = 0;
-            textured=false;
-            ior=2;
-        }
-
-        Material(std::string _diffuseTextureFile){
-            kd = 0.8;
-            ks = 0.2;
-            ka = kd;
-            shininessExponant = 25;
-            lightEmission = 0;
-            textured=true;
-            diffuseTextureFile = _diffuseTextureFile;
-            ior=2;
+            opacity = 1;
+            lightAbsorption = 0.1;
+            textured = false;
+            ior = 2;
         }
 
         float getKR(const Eigen::Vector3f &incidentPoint, const Eigen::Vector3f &normal){

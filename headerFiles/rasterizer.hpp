@@ -5,10 +5,10 @@
 #include <optional>
 #include <vector>
 
-#include <headerFiles/object.hpp>
-#include <headerFiles/shader.hpp>
-#include <headerFiles/texture.hpp>
-#include <headerFiles/scene.hpp>
+#include <object.hpp>
+#include <shader.hpp>
+#include <texture.hpp>
+#include <scene.hpp>
 
 using namespace Eigen;
 
