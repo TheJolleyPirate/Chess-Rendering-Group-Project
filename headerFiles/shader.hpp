@@ -20,6 +20,7 @@ struct fragment_shader_payload
     Texture* texture;
 };
 
+/*
 struct Material {
     Eigen::Vector3f ambient;
     Eigen::Vector3f diffuse;
@@ -31,4 +32,4 @@ struct Material {
           diffuse(0.6f, 0.6f, 0.6f),
           specular(0.3f, 0.3f, 0.3f),
           shininess(32.0f) {}
-};
+};*/
