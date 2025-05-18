@@ -1,5 +1,4 @@
 #include "scene.hpp"
-#include "loadMesh.hpp"
 #include "json.hpp"
 #include "shader.hpp"
 #include <fstream>
@@ -7,55 +6,62 @@
 #include <memory>
 #include <Eigen/Dense>
 
+using namespace std;
+using namespace Eigen;
 using json = nlohmann::json;
-// Test if the json file can be loaded correctly
-void loadSceneFromJson(const std::string& path, Scene& scene) {
-    std::ifstream in(path);
-    if (!in.is_open()) {
-        std::cerr << "Failed to open scene JSON: " << path << std::endl;
-        return;
-    }
 
+void applyTransform(Object &object, const Affine3f &transform){
+    Matrix4f transformationMatrix = transform.matrix();
+    for(shared_ptr<Vertex> vertex : object.vertices){
+        Vector4f homoPosition;
+        homoPosition.head(3) = vertex->position;
+        homoPosition(3) = 1;
+        vertex->position = (transformationMatrix * homoPosition).head(3);
+    }
+}
+
+Scene loadSceneFromJson(std::map<std::string, Object> rawObjects, std::string fileJSON){
+    ifstream in(fileJSON);
+    // Test if the json file can be loaded correctly
+    if (!in.is_open()) {
+        string message = "Failed to open scene JSON: " + fileJSON;
+        throw message;
+    }
     json j;
     in >> j;
+    vector<Object> sceneObjects;
 
-    for (const auto& obj : j["objects"]) {
-        std::string mesh_path = obj["mesh"];
-        std::shared_ptr<Mesh> mesh = loadModel(mesh_path);
-        if (!mesh) {
-            std::cerr << "Failed to load mesh from: " << mesh_path << std::endl;
-            continue;
+    for (const auto& objectSceneInfo : j["objects"]) {
+        string objectName = objectSceneInfo["model"];
+        if(rawObjects.count(objectName) == 0){
+            string message = "no mesh named " + objectName;
+            throw(message);
         }
+        Object object = rawObjects[objectName];
 
         // Default transform: identity
-        Eigen::Affine3f transform = Eigen::Affine3f::Identity();
+        Affine3f transform = Affine3f::Identity();
 
-        if (obj.contains("transform")) {
-            auto t = obj["transform"];
-            if (t.contains("translate")) {
-                Eigen::Vector3f tr(t["translate"][0], t["translate"][1], t["translate"][2]);
+        if (objectSceneInfo.contains("transform")) {
+            auto transformInfo = objectSceneInfo["transform"];
+            if (transformInfo.contains("translate")) {
+                Vector3f tr(transformInfo["translate"][0], transformInfo["translate"][1], transformInfo["translate"][2]);
                 transform.translate(tr);
             }
-            if (t.contains("scale")) {
-                Eigen::Vector3f s(t["scale"][0], t["scale"][1], t["scale"][2]);
+            if (transformInfo.contains("rotate")) {
+                float angle = transformInfo["rotate"]["angle"];
+                Vector3f axis(transformInfo["rotate"]["axis"][0], transformInfo["rotate"]["axis"][1], transformInfo["rotate"]["axis"][2]);
+                transform.rotate(AngleAxisf(angle, axis.normalized()));
+            }
+            if (transformInfo.contains("scale")) {
+                Vector3f s(transformInfo["scale"][0], transformInfo["scale"][1], transformInfo["scale"][2]);
                 transform.scale(s);
             }
-            if (t.contains("rotate")) {
-                float angle = t["rotate"]["angle"];
-                Eigen::Vector3f axis(t["rotate"]["axis"][0], t["rotate"]["axis"][1], t["rotate"]["axis"][2]);
-                transform.rotate(Eigen::AngleAxisf(angle, axis.normalized()));
-            }
         }
-
-        Material mat;
-        if (obj.contains("material")) {
-            auto m = obj["material"];
-            mat.ambient = Eigen::Vector3f(m["ambient"][0], m["ambient"][1], m["ambient"][2]);
-            mat.diffuse = Eigen::Vector3f(m["diffuse"][0], m["diffuse"][1], m["diffuse"][2]);
-            mat.specular = Eigen::Vector3f(m["specular"][0], m["specular"][1], m["specular"][2]);
-            mat.shininess = m["shininess"];
-        }
-
-        scene.addObject(mesh, mat, transform);
+        applyTransform(object, transform);
+        sceneObjects.push_back(object);
     }
+    in.close();
+    Light light = Light({0, 10, 0}, {1, 1, 1});
+    return Scene(sceneObjects, {light});
 }
