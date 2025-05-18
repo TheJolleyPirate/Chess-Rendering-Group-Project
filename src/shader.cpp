@@ -1,8 +1,8 @@
 #include <Eigen/Eigen>
 #include <vector>
 
-#include <headerFiles/shader.hpp>
-#include <headerFiles/light.hpp>
+#include <shader.hpp>
+#include <light.hpp>
 
 
 Eigen::Vector3f blinn_phong_fragment_shader(const fragment_shader_payload &payload) {

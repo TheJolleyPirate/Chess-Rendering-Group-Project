@@ -13,11 +13,9 @@ class Scene{
     public:
         std::vector<Object> objects;
         std::vector<Light> lights;
-        Eigen::Vector3f eyePosition;
-        Scene(std::vector<Object> _objects, std::vector<Light> _lights, Eigen::Vector3f _eyePosition){
+        Scene(std::vector<Object> _objects, std::vector<Light> _lights){
             objects = _objects;
             lights = _lights;
-            eyePosition = _eyePosition;
         }
 };
-Scene buildScene(std::map<std::string, Object> objects);
+Scene loadSceneFromJson(std::map<std::string, Object> objects, std::string fileJSON);

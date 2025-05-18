@@ -19,17 +19,3 @@ struct fragment_shader_payload
     std::vector<Light> view_lights;
     Texture* texture;
 };
-
-/*
-struct Material {
-    Eigen::Vector3f ambient;
-    Eigen::Vector3f diffuse;
-    Eigen::Vector3f specular;
-    float shininess;
-
-    Material()
-        : ambient(0.1f, 0.1f, 0.1f),
-          diffuse(0.6f, 0.6f, 0.6f),
-          specular(0.3f, 0.3f, 0.3f),
-          shininess(32.0f) {}
-};*/

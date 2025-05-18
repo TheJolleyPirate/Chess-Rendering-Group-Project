@@ -83,6 +83,8 @@ void renderScene(Scene scene){
     std::function<Eigen::Vector3f(fragment_shader_payload)> active_shader = texture_fragment_shader;
 
     // Set up rasterizer
+    float height = 512;
+    float width = 512;
     rst::Rasterizer r(512, 512);
     r.clear(rst::Buffers::Colour | rst::Buffers::Depth);
     r.setView(camera.getViewMatrix());
@@ -104,7 +106,7 @@ int main(){
         std::map<std::string, Object> objects = loadModels("../Models");
         cout << "models loaded\n";
         cout << "building scene\n";
-        Scene scene = buildScene(objects);
+        Scene scene = loadSceneFromJson(objects, "../Models/chess_scene.json");
         cout << "scene built\n";
         cout << "rendering scene\n";
         renderScene(scene);
