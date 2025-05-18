@@ -1,7 +1,6 @@
 #include "scene.hpp"
 #include "loadMesh.hpp"
 #include "json.hpp"
-#include "mesh.hpp"
 #include "shader.hpp"
 #include <fstream>
 #include <iostream>
