@@ -85,14 +85,14 @@ void renderScene(Scene scene){
     // Set up rasterizer
     float height = 512;
     float width = 512;
-    rst::Rasterizer r(512, 512);
+    rst::Rasterizer r(width, height);
     r.clear(rst::Buffers::Colour | rst::Buffers::Depth);
     r.setView(camera.getViewMatrix());
     r.setProjection(camera.getProjectionMatrix());
     r.setFragmentShader(active_shader);
     // Draw objects
     r.rasterizeObjects(scene);
-    cv::Mat image(700, 700, CV_32FC3, r.frame_buffer().data());
+    cv::Mat image(width, height, CV_32FC3, r.frame_buffer().data());
     image.convertTo(image, CV_8UC3, 1.0f);
     cv::cvtColor(image, image, cv::COLOR_RGB2BGR);
     cv::imshow("image", image);
@@ -103,14 +103,23 @@ void renderScene(Scene scene){
 int main(){
     try{
         cout << "loading models\n";
-        std::map<std::string, Object> objects = loadModels("../Models");
+        std::map<std::string, Object> objects = loadModels("../Models/lowPolyPawn");
         cout << "models loaded\n";
         cout << "building scene\n";
         Scene scene = loadSceneFromJson(objects, "../Models/chess_scene.json");
         cout << "scene built\n";
         cout << "rendering scene\n";
+        auto start = std::chrono::system_clock::now();
         renderScene(scene);
+        auto stop = std::chrono::system_clock::now();
         cout << "scene rendered\n";
+        auto time = stop - start;
+        auto hours = std::chrono::duration_cast<std::chrono::hours>(time);
+        time = time - hours;
+        auto minutes = std::chrono::duration_cast<std::chrono::minutes>(time);
+        time = time - minutes;
+        auto seconds = std::chrono::duration_cast<std::chrono::seconds>(time).count();
+        cout << "render time: " << hours.count() << ":" << minutes.count() << ":" << seconds << "\n";
     }
     catch(string message){
         cerr << "exception occurred, message: " << message << "\n";

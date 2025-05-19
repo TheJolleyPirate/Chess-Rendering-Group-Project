@@ -30,4 +30,4 @@ target_link_libraries(chessRenderer ${OpenCV_LIBRARIES} supplemental)
 #add more executables as required for testing:
 #example:
 #add_executable(test1 test1.cpp ${OpenCV_LIBRARIES} supplemental)
-#target_link_libraries(test1 ${OpenCV_LIBRARIES} supplemental)
+#target_link_libraries(test1 ${OpenCV_LIBRARIES} supplemental) 

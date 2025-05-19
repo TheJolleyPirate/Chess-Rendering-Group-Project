@@ -6,6 +6,7 @@
 
 
 Eigen::Vector3f blinn_phong_fragment_shader(const fragment_shader_payload &payload) {
+    return {1, 1, 1};
     // Material properties
     Eigen::Vector3f ka = Eigen::Vector3f(0.005, 0.005, 0.005);
     Eigen::Vector3f kd = payload.colour;
@@ -54,6 +55,7 @@ Eigen::Vector3f blinn_phong_fragment_shader(const fragment_shader_payload &paylo
 
 
 Eigen::Vector3f texture_fragment_shader(const fragment_shader_payload &payload) {
+    return {1, 1, 1};
     // Retrieve the texture colour at the current fragment's texture coordinates (given it exists)
     Eigen::Vector3f texture_color = {0, 0, 0};
     if (payload.texture) {

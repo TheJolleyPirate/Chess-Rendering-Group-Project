@@ -2,6 +2,7 @@
 
 #include <memory>
 #include <vector>
+#include <iostream>
 #include <Eigen/Dense>
 class Object;
 class Material;
@@ -57,7 +58,7 @@ class Vertex{
         int id; //unique within object
         std::weak_ptr<HalfEdge> halfEdge;
         Eigen::Vector3f position;
-        Eigen::Vector3f normal;
+        Eigen::Vector3f normal = Eigen::Vector3f(0, 0, 0);
         Eigen::Vector2f textureCoordinates;
         Eigen::Vector3f colour; //if you are doing colour per vertex
         Vertex(int _id): id(_id){}
@@ -93,17 +94,10 @@ class Vertex{
             return neighbourhood;
         }
 
-        // Compute the normal vector for this vertex by averaging the normals of the faces it belongs to
         Eigen::Vector3f computeNormal() {
-            Eigen::Vector3f normal = Eigen::Vector3f::Zero();
-            auto halfEdges = neighbourHalfEdges();
-            for (auto& he : halfEdges) {
-                if (he->face == nullptr) {
-                    continue;
-                }
-                normal += he->face->normal;
+            if(this->normal == Eigen::Vector3f(0, 0, 0)){
+                this->normal = halfEdge.lock()->face->normal;
             }
-            this->normal = normal.normalized();
             return this->normal;
         }
 };
