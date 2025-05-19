@@ -103,7 +103,7 @@ void renderScene(Scene scene){
 int main(){
     try{
         cout << "loading models\n";
-        std::map<std::string, Object> objects = loadModels("../Models/lowPolyPawn");
+        std::map<std::string, Object> objects = loadModels("../Models/");
         cout << "models loaded\n";
         cout << "building scene\n";
         Scene scene = loadSceneFromJson(objects, "../Models/chess_scene.json");

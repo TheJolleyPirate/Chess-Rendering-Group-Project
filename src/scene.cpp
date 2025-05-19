@@ -23,7 +23,7 @@ void applyTransform(Object &object, const Affine3f &transform){
 Scene loadSceneFromJson(std::map<std::string, Object> rawObjects, std::string fileJSON){
     Light light = Light({0, 10, 0}, {1, 1, 1});
 
-    return Scene({rawObjects["lowPolyPawn"]}, {light});
+    //return Scene({rawObjects["lowPolyPawn"]}, {light});
 
     ifstream in(fileJSON);
     // Test if the json file can be loaded correctly

@@ -17,7 +17,7 @@ public:
         : position(_position), target(_target), up(_up), fov(_fov), aspectRatio(_aspectRatio), nearPlane(_nearPlane), farPlane(_farPlane) {}
 
     Eigen::Matrix4f lookAt() const {
-        Eigen::Matrix4f view;
+        Eigen::Matrix4f view = Matrix4f::Identity();
         
         Eigen::Vector3f z = (position - target).normalized();
         Eigen::Vector3f x = up.cross(z).normalized();

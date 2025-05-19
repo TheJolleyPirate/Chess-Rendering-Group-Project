@@ -66,8 +66,8 @@ void rst::Rasterizer::rasterizeObjects(Scene scene){
 
 void rst::Rasterizer::draw(std::vector<std::shared_ptr<Face>> &faces, std::vector<Light> lights) {
     // Needed to manually map z screen positions to [nearPlane, farPlane] for current test camera
-    float f1 = (50 - 0.1) / 2.0f;
-    float f2 = (50 + 0.1) / 2.0f;
+    float f1 = -(50 - 0.1) / 2.0f;
+    float f2 = -(50 + 0.1) / 2.0f;
 
     // Convert lights to view space
     std::vector<Light> viewspace_lights;
@@ -76,10 +76,12 @@ void rst::Rasterizer::draw(std::vector<std::shared_ptr<Face>> &faces, std::vecto
         viewspace_lights.push_back(Light(lightPos.head<3>(), light.intensity));
     }
 
+    Eigen::Matrix4f model = Eigen::Matrix4f::Identity(); // Assuming face is already in world space
+    Eigen::Matrix4f mvp = projection * view * model;
     // Extract vertices from the face
     int count = 1;
     for (auto &face : faces) {
-        cout << "\r\trasterizing face " << count++ << "/" << faces.size() << "\n";
+        cout << "\r\trasterizing face " << count++ << "/" << faces.size();
         auto vertices = face->getVertices();
         if (vertices.size() != 3) {
             std::cerr << "Error: Face is not a triangle!" << std::endl;
@@ -87,9 +89,6 @@ void rst::Rasterizer::draw(std::vector<std::shared_ptr<Face>> &faces, std::vecto
         }
 
         // Convert vertices to viewspace and screen space
-        Eigen::Matrix4f model = Eigen::Matrix4f::Identity(); // Assuming face is already in world space
-        Eigen::Matrix4f mvp = model * view * projection;
-
         std::vector<Eigen::Vector3f> viewspace_vertices;
         std::vector<Vertex> screenspace_vertices;
         for (int i = 0; i < 3; i++) {
@@ -99,7 +98,8 @@ void rst::Rasterizer::draw(std::vector<std::shared_ptr<Face>> &faces, std::vecto
 
             // Convert to screen space
             Eigen::Vector4f screen_pos = mvp * to_vec4(vertices[i]->position);
-            screen_pos /= screen_pos.w(); // Perpective divide
+
+            screen_pos /= screen_pos.w(); // Perspective divide
 
             // Map NDC to screen space
             screen_pos.x() = 0.5 * width * (screen_pos.x() + 1.0);
@@ -113,11 +113,12 @@ void rst::Rasterizer::draw(std::vector<std::shared_ptr<Face>> &faces, std::vecto
 
         }
         //back face culling
-        Vector3f triNorm = (viewspace_vertices[1] - viewspace_vertices[0]).cross(viewspace_vertices[2] - viewspace_vertices[0]);
+        Vector3f triNorm = (screenspace_vertices[1].position - screenspace_vertices[0].position).cross(screenspace_vertices[2].position - screenspace_vertices[0].position);
         if(triNorm.z() < 0){
             rasterizeTriangle(screenspace_vertices, viewspace_vertices, viewspace_lights);
         }
     }
+    cout << "\n";
     // Perform post-processing to average the SSAA samples
     postProcessBuffer();
 }
@@ -164,7 +165,7 @@ void rst::Rasterizer::postProcessBuffer() {
             for (int i = 0; i < 4; i++) {
                 frameBuffer[index] += ssaaFrameBuffer[4 * index + i];
             }
-            frameBuffer[index] /= 4;
+            frameBuffer[index] = (frameBuffer[index] / 4) * 255;
         }
     }
 }
@@ -205,7 +206,7 @@ void rst::Rasterizer::rasterizeTriangle(std::vector<Vertex> &vertices, std::vect
     Eigen::Vector3f vertex_colours[3];
     for (int j = 0; j < 3; j++) {
         fragment_shader_payload payload(vertices[j].colour,
-                                        vertices[j].computeNormal(),
+                                        vertices[j].computeNormal(), //need to change this as it is using the pre transformation normal
                                         vertices[j].textureCoordinates,
                                         view_lights,
                                         texture ? &*texture : nullptr);
