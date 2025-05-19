@@ -53,7 +53,9 @@ auto to_vec4(const Eigen::Vector3f &v3, float w = 1.0f) {
 
 // Rasterize the objects in the scene
 void rst::Rasterizer::rasterizeObjects(Scene scene){
+    int count = 1;
     for (auto& object : scene.objects) {
+        cout << "\trasterizing object " << count++ << "/" << scene.objects.size() << "\n";
         if (object.material.diffuseTextureFile != "") {
             set_texture(Texture(object.material.diffuseTextureFile));
         }
@@ -62,7 +64,7 @@ void rst::Rasterizer::rasterizeObjects(Scene scene){
     }
 }
 
-void rst::Rasterizer::draw(std::vector<std::shared_ptr<Face>> faces, std::vector<Light> lights) {
+void rst::Rasterizer::draw(std::vector<std::shared_ptr<Face>> &faces, std::vector<Light> lights) {
     // Needed to manually map z screen positions to [nearPlane, farPlane] for current test camera
     float f1 = (50 - 0.1) / 2.0f;
     float f2 = (50 + 0.1) / 2.0f;
@@ -75,7 +77,9 @@ void rst::Rasterizer::draw(std::vector<std::shared_ptr<Face>> faces, std::vector
     }
 
     // Extract vertices from the face
+    int count = 1;
     for (auto &face : faces) {
+        cout << "\r\trasterizing face " << count++ << "/" << faces.size() << "\n";
         auto vertices = face->getVertices();
         if (vertices.size() != 3) {
             std::cerr << "Error: Face is not a triangle!" << std::endl;
@@ -91,7 +95,7 @@ void rst::Rasterizer::draw(std::vector<std::shared_ptr<Face>> faces, std::vector
         for (int i = 0; i < 3; i++) {
             // Convert to view space
             Eigen::Vector4f view_pos = view * to_vec4(vertices[i]->position);
-            viewspace_vertices.push_back(view_pos.head<3>());
+            viewspace_vertices.push_back(view_pos.head(3));
 
             // Convert to screen space
             Eigen::Vector4f screen_pos = mvp * to_vec4(vertices[i]->position);
@@ -106,12 +110,16 @@ void rst::Rasterizer::draw(std::vector<std::shared_ptr<Face>> faces, std::vector
             Vertex newVertex = *vertices[i];
             newVertex.position = screen_pos.head<3>();
             screenspace_vertices.push_back(newVertex);
+
+        }
+        //back face culling
+        Vector3f triNorm = (viewspace_vertices[1] - viewspace_vertices[0]).cross(viewspace_vertices[2] - viewspace_vertices[0]);
+        if(triNorm.z() < 0){
+            rasterizeTriangle(screenspace_vertices, viewspace_vertices, viewspace_lights);
         }
     }
-}
-
-// TODO: if we don't know what shape the face is
-void rasterizeFace(Face face){
+    // Perform post-processing to average the SSAA samples
+    postProcessBuffer();
 }
 
 // Check if a point (x, y) is inside a triangle defined by three vertices
@@ -143,13 +151,30 @@ static std::tuple<float, float, float> computeBarycentric2D(float x, float y, co
     return {c1, c2, c3};
 }
 
+// Convert a 2D screen coordinate (x, y) to a 1D index in the frame buffer
+int rst::Rasterizer::getIndex(int x, int y) {
+    return (height - y - 1) * width + x;
+}
+
+// Post-process the SSAA buffer to average the samples and store them in the main frame buffer
+void rst::Rasterizer::postProcessBuffer() {
+    for (int x = 0; x < width; x++) {
+        for (int y = 0; y < height; y++) {
+            int index = getIndex(x, y);
+            for (int i = 0; i < 4; i++) {
+                frameBuffer[index] += ssaaFrameBuffer[4 * index + i];
+            }
+            frameBuffer[index] /= 4;
+        }
+    }
+}
+
 // Interpolates a 3D vector (e.g., color, normal) using barycentric coordinates
 static Eigen::Vector3f interpolate(float alpha, float beta, float gamma, const Eigen::Vector3f &vert1,
     const Eigen::Vector3f &vert2, const Eigen::Vector3f &vert3, float weight) {
-return (alpha * vert1 + beta * vert2 + gamma * vert3) / weight;
+    return (alpha * vert1 + beta * vert2 + gamma * vert3) / weight;
 }
 
-// If we know the face is a triangle
 void rst::Rasterizer::rasterizeTriangle(std::vector<Vertex> &vertices, std::vector<Eigen::Vector3f> &view_pos, std::vector<Light> &view_lights) {
     // Convert vertices to 4D homogeneous coordinates
     Eigen::Vector4f v[3];
@@ -162,6 +187,11 @@ void rst::Rasterizer::rasterizeTriangle(std::vector<Vertex> &vertices, std::vect
     float maxX = std::min((float)(width - 1), std::ceil(std::max({v[0].x(), v[1].x(), v[2].x()})));
     float minY = std::max(0.0f, std::floor(std::min({v[0].y(), v[1].y(), v[2].y()})));
     float maxY = std::min((float)(height - 1), std::ceil(std::max({v[0].y(), v[1].y(), v[2].y()})));
+
+    //Screen‐space rejection
+    if(maxX < 0 || minX > width || maxY < 0 || minY > height){
+        return;
+    }
 
     // Subpixel sampling offsets for 2x2 SSAA
     Eigen::Vector2f ssaa_offset[4] = {
@@ -185,10 +215,10 @@ void rst::Rasterizer::rasterizeTriangle(std::vector<Vertex> &vertices, std::vect
     }
 
     // Iterate over each pixel in the bounding box
-    for (int x = minX; x <= maxX; x++) {
-        for (int y = minY; y <= maxY; y++) {
+    for (int x = minX; x <= maxX; ++x) {
+        for (int y = minY; y <= maxY; ++y) {
             // Iterate over each subpixel
-            for (int i = 0; i < 4; i++) {
+            for (int i = 0; i < 4; ++i) {
                 float px = x + ssaa_offset[i].x();
                 float py = y + ssaa_offset[i].y();
 
@@ -222,26 +252,6 @@ void rst::Rasterizer::rasterizeTriangle(std::vector<Vertex> &vertices, std::vect
             }
         }
     }
-    // Perform post-processing to average the SSAA samples
-    postProcessBuffer();
-}
-
-// Post-process the SSAA buffer to average the samples and store them in the main frame buffer
-void rst::Rasterizer::postProcessBuffer() {
-    for (int x = 0; x < width; x++) {
-        for (int y = 0; y < height; y++) {
-            int index = getIndex(x, y);
-            for (int i = 0; i < 4; i++) {
-                frameBuffer[index] += ssaaFrameBuffer[4 * index + i];
-            }
-            frameBuffer[index] /= 4;
-        }
-    }
-}
-
-// Convert a 2D screen coordinate (x, y) to a 1D index in the frame buffer
-int rst::Rasterizer::getIndex(int x, int y) {
-    return (height - y - 1) * width + x;
 }
 
 // Set a pixel in the frame buffer to a specific color

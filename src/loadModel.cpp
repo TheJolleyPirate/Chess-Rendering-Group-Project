@@ -155,7 +155,7 @@ Material LoadMaterial(string path, string fileName){
     std::ifstream file(path + fileName);
     if(!file.is_open()){
         string badFile = "can't open file ";
-        badFile.append(path);
+        badFile.append(path + fileName);
         throw badFile; 
     }
 
@@ -427,36 +427,36 @@ Object load(string fileLocation, string fileName) {
     Object object;
     try{
         Mesh mesh = loadFile(fileLocation);
-        cout << "OBJ file loaded successfully: " << fileLocation << std::endl;
+        cout << "\tOBJ file loaded successfully: " << fileLocation << std::endl;
         object = meshToHalfEdge(mesh);
-        cout << "mesh successfully made for " << fileName << std::endl;
+        cout << "\tmesh successfully made for " << fileName << std::endl;
 
     }
     catch(string message){
-        cerr << "\nFailed to load OBJ file: " << fileLocation << ", reason: " << message << std::endl;
-        return object;
+        message = "in loadModel " + message;
+        throw message;
     }
-    cout << "checking consistency\n";
+    cout << "\tchecking consistency\n";
     if(!objectFacesConsistent){
-        cout << "making " << fileName << " consistently faced: " << flush;
+        cout << "\tmaking " << fileName << " consistently faced: " << flush;
         makeObjectFacesConsistent(object);
         cout << "success\n";
     }
-    cout << "checking if object tri\n";
+    cout << "\tchecking if object tri\n";
     if(!objectTri(object)){
-        cout << "making " << fileName << " triangle mesh: " << flush;
+        cout << "\tmaking " << fileName << " triangle mesh: " << flush;
         makeObjectTri(object);
         cout << "success\n";
     }
-    cout << "checking closed\n";
+    cout << "\tchecking closed\n";
     if(!objectClosed){
         cerr << fileLocation << " not closed\n";
     }
-    cout << "checking connected\n";
+    cout << "\tchecking connected\n";
     if(!objectConnected){
         cerr << fileLocation << " not fully connected\n";
     }
-    cout << "checking manifold\n";
+    cout << "\tchecking manifold\n";
     if(!objectManifold){
         cerr << fileLocation << " not manifold\n";
     }
