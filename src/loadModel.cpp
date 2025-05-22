@@ -368,7 +368,7 @@ Object meshToHalfEdge(const Mesh& mesh) {
         shared_ptr<HalfEdge> firstHalfEdge;
 
         for(int vertexIndex: faceIndices){
-            shared_ptr<HalfEdge> halfEdge = make_shared<HalfEdge>(HalfEdge(faceIdCounter++));
+            shared_ptr<HalfEdge> halfEdge = make_shared<HalfEdge>(HalfEdge(halfEdgeIdCounter++));
             if(previous != nullptr){
                 previous->next = halfEdge;
                 halfEdge->previous = previous;

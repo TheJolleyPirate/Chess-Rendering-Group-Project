@@ -9,12 +9,13 @@
 
 #include <meshChecker.hpp>
 #include <object.hpp>
+#include <bits/stdc++.h>
 
 using namespace std;
 using namespace Eigen;
 
 bool objectClosed(const Object &object){
-    for(shared_ptr<HalfEdge> halfEdge : object.halfEdges){
+    for(const shared_ptr<HalfEdge> &halfEdge : object.halfEdges){
         if(!halfEdge->face){
             return false;
         }
@@ -51,7 +52,7 @@ bool objectConnected(const Object &object){
             continue;
         }
         visited.insert(vertex->id);
-        for (std::shared_ptr<Vertex> neighbour : vertex->getNeighbourVertices()) {
+        for (const shared_ptr<Vertex> &neighbour : vertex->getNeighbourVertices()) {
             vertexStack.push(neighbour);
         }
     }
@@ -72,7 +73,7 @@ bool objectManifold(const Object &object){
     //to check edge manifoldness, make sure their are exactly 2 faces on each edge.
     //first check to make sure only 2 faces share an edge
     vector<vector<int>> numEdgesBetweenVertices(object.vertices.size(), vector<int>(object.vertices.size(), 0));
-    for(shared_ptr<Face> face : object.faces){
+    for(const shared_ptr<Face> &face : object.faces){
         shared_ptr<HalfEdge> current = face->halfEdge.lock();
         int startID = current->id;
         do{
@@ -100,7 +101,7 @@ bool objectManifold(const Object &object){
     }
     vector<vector<int>> startingPoints(object.vertices.size(), vector<int>());
     //then check if there are any edges with no face
-    for(shared_ptr<HalfEdge> halfEdge : object.halfEdges){
+    for(const shared_ptr<HalfEdge> &halfEdge : object.halfEdges){
         if(!halfEdge->face){
             return false;
         }
@@ -111,7 +112,7 @@ bool objectManifold(const Object &object){
     int index = 0;
     int maxFan = object.vertices.size();
 
-    for(shared_ptr<Vertex> vertex : object.vertices){
+    for(const shared_ptr<Vertex> &vertex : object.vertices){
         vector<int> currentFan;
         shared_ptr<HalfEdge> halfEdge = vertex->halfEdge.lock();
         shared_ptr<HalfEdge> twin;
@@ -182,7 +183,7 @@ bool objectFacesConsistent(const Object &object){
     //two adjacent polygons have a consistant orientation if touching edges face opposite directions
     //make a bool for each origin vertex - destination vertex combo and set it to false
     vector<vector<bool>> originToDest(object.vertices.size(), vector<bool>(object.vertices.size(), false));
-    for(shared_ptr<HalfEdge> halfEdge : object.halfEdges){
+    for(const shared_ptr<HalfEdge> &halfEdge : object.halfEdges){
         int origin = halfEdge->vertex->id;
         int destination = halfEdge->next->vertex->id;
         //if the current half edge's origin and destination have been encountered return false
@@ -203,7 +204,7 @@ void makeObjectFacesConsistent(Object &object){
     //get a matrix of what faces connect to what edges
     vector<vector<vector<shared_ptr<Face>>>> edges(numVertices, vector<vector<shared_ptr<Face>>>(numVertices));
     vector<shared_ptr<Face>> faces = object.faces;
-    for(shared_ptr<Face> face : object.faces){
+    for(const shared_ptr<Face> &face : object.faces){
         shared_ptr<HalfEdge> halfEdge = face->halfEdge.lock();
         shared_ptr<HalfEdge> previous;
         int startID = halfEdge->id;
@@ -260,11 +261,11 @@ void makeObjectFacesConsistent(Object &object){
         visited.insert(face->id);
         consistentFaces.push_back(face);
         
-        for(std::vector<int> directedEdge : directions){
+        for(const vector<int> &directedEdge : directions){
             int from = directedEdge[0];
             int to = directedEdge[1];
             vector<shared_ptr<Face>> adjacent = edges[from][to];
-            for(shared_ptr<Face> adj : adjacent){
+            for(const shared_ptr<Face> &adj : adjacent){
                 if(adj->id == face -> id){
                     continue;
                 }
@@ -291,7 +292,7 @@ void makeObjectFacesConsistent(Object &object){
     };
     //handle disconnected faces by starting in multiple spots
     //(faces will only be consistent with faces they are connected to)
-    for(shared_ptr<Face> face : faces){
+    for(const shared_ptr<Face> &face : faces){
         if(visited.count(face->id) == 0){
             exploreFaces(exploreFaces, face, false);
         }
@@ -303,7 +304,7 @@ void makeObjectFacesConsistent(Object &object){
             //assume there are only at most 2 entries in currentEdgeFaces
             vector<shared_ptr<HalfEdge>> adjacentHalfEdges;
             int numIterations = 0;
-            for(shared_ptr<Face> face : currentEdgeFaces){
+            for(const shared_ptr<Face> &face : currentEdgeFaces){
                 numIterations += 1;
                 if(numIterations > 2){
                     break;
@@ -363,55 +364,29 @@ namespace seidel{
         if(leftDest.position.y() > leftOrigin.position.y()){
             //check if already triangle
             if(leftDest.position == rightOrigin.position){
-                Point A = leftOrigin;
-                Point B = leftDest;
-                Point C = rightDest;
-                triangles.push_back({A, B, C});
+                triangles.push_back({leftOrigin, leftDest, rightDest});
                 return triangles;
             }
             else if(rightDest.position == leftOrigin.position){
-                Point A = leftOrigin;
-                Point B = leftDest;
-                Point C = rightOrigin;
-                triangles.push_back({A, B, C});
+                triangles.push_back({leftOrigin, leftDest, rightOrigin});
                 return triangles;
             }
             //form triangles from vertices
-            Point A1 = leftOrigin;
-            Point B1 = leftDest;
-            Point C1 = rightDest;
-            triangles.push_back({A1, B1, C1});
-    
-            Point A2 = leftDest;
-            Point B2 = rightOrigin;
-            Point C2 = rightDest;
-            triangles.push_back({A2, B2, C2});
+            triangles.push_back({leftOrigin, leftDest, rightDest});
+            triangles.push_back({leftDest, rightOrigin, rightDest});
         }
         //else anticlockwise
         else{
             if(leftOrigin.position == rightDest.position){
-                Point A = leftOrigin;
-                Point B = leftDest;
-                Point C = rightOrigin;
-                triangles.push_back({A, B, C});
+                triangles.push_back({leftOrigin, leftDest, rightOrigin});
                 return triangles;
             }
             else if(rightOrigin.position == leftDest.position){
-                Point A = leftOrigin;
-                Point B = leftDest;
-                Point C = rightDest;
-                triangles.push_back({A, B, C});
+                triangles.push_back({leftOrigin, leftDest, rightDest});
                 return triangles;
             }
-            Point A1 = leftOrigin;
-            Point B1 = leftDest;
-            Point C1 = rightDest;
-            triangles.push_back({A1, B1, C1});
-    
-            Point A2 = leftDest;
-            Point B2 = rightOrigin;
-            Point C2 = rightDest;
-            triangles.push_back({A2, B2, C2});
+            triangles.push_back({leftOrigin, leftDest, rightDest});
+            triangles.push_back({leftDest, rightOrigin, rightDest});
         }
         return triangles;
     }    
@@ -513,10 +488,10 @@ namespace seidel{
                 bottomTrap->down = old->down;
                 topTrap->down.push_back(bottomTrap);
                 bottomTrap->up.push_back(topTrap);
-                for(shared_ptr<Trapezoid> above : topTrap->up){
+                for(const shared_ptr<Trapezoid> &above : topTrap->up){
                     replace(above->down.begin(), above->down.end(), old, topTrap);
                 }
-                for(shared_ptr<Trapezoid> below : bottomTrap->down){
+                for(const shared_ptr<Trapezoid> &below : bottomTrap->down){
                     replace(below->up.begin(), below->up.end(), old, bottomTrap);
                 }
                 return currentNode;
@@ -545,7 +520,7 @@ namespace seidel{
         Vector3f b;
         vector<shared_ptr<Node>> children = {node->left, node->right};
         //get new ups and downs, and set neighbours
-        for(shared_ptr<Trapezoid> above : old->up){
+        for(const shared_ptr<Trapezoid> &above : old->up){
             auto iter = find(above->down.begin(), above->down.end(), old);
             if ( iter != above->down.end() ) {
                 above->down.erase(iter);
@@ -583,7 +558,7 @@ namespace seidel{
                     lowerRightAbove = b.x();
                 }
             }
-            for(shared_ptr<Node> child : children){
+            for(const shared_ptr<Node> &child : children){
                 //get upper left child x coord
                 float upperLeftChild;
                 lseg = child->trapezoid->lseg.lock();
@@ -621,7 +596,7 @@ namespace seidel{
                 }
             }
         }
-        for(shared_ptr<Trapezoid> below : old->down){
+        for(const shared_ptr<Trapezoid> &below : old->down){
             auto iter = find(below->up.begin(), below->up.end(), old);
             if ( iter != below->up.end() ) {
                 below->up.erase(iter);
@@ -658,7 +633,7 @@ namespace seidel{
                     upperRightBelow = b.x();
                 }
             }
-            for(shared_ptr<Node> child : children){
+            for(const shared_ptr<Node> &child : children){
                 //get lower left child x coord
                 float lowerLeftChild;
                 lseg = child->trapezoid->lseg.lock();
@@ -790,16 +765,23 @@ namespace seidel{
     
     inline Point yInterceptFinder(const shared_ptr<Vertex> origin, const shared_ptr<Vertex> dest, float yIntercept){
         Vector3f edgeVector = dest->position - origin->position;
-        float mult = (yIntercept - origin->position.y()) / (edgeVector.y());
-        Vector3f position = origin->position + (mult * (edgeVector));
-        Vector3f colour = (origin->colour * (1 - mult)) + (dest->colour * mult);
-        Vector2f textureCoords = (origin->textureCoordinates * (1 - mult)) + (dest->textureCoordinates * mult);
+        Vector3f position;
+        Vector3f colour;
+        Vector2f textureCoords;
+        if (fabs(edgeVector.y()) < FLT_EPSILON) {
+            //not quite accurate because we don't know if it is coming from origin or dest direction
+            //but close enough for an edge case.
+            position = origin->position;
+            colour = origin->colour;
+            textureCoords = origin->textureCoordinates;
+        }
+        else{
+            float mult = (yIntercept - origin->position.y()) / (edgeVector.y());
+            position = origin->position + (mult * (edgeVector));
+            colour = (origin->colour * (1 - mult)) + (dest->colour * mult);
+            textureCoords = (origin->textureCoordinates * (1 - mult)) + (dest->textureCoordinates * mult);
+        }
         return Point(position, colour, textureCoords);
-    }
-    
-    inline Vector3f xInterceptFinder(Vector3f origin, Vector3f dest, float xIntercept){
-        float mult = (xIntercept - origin.x()) / (dest.x() - origin.x());
-        return origin + (mult * (dest - origin));
     }
     
     Matrix4f getRotation(const shared_ptr<Face> &face){
@@ -826,7 +808,10 @@ namespace seidel{
         Matrix4f rotationMatrix = getRotation(face);
         Matrix4f inverseRotation = rotationMatrix.inverse();
         vector<shared_ptr<HalfEdge>> faceEdges = face->getHalfEdges();
-        for(shared_ptr<HalfEdge> halfEdge : faceEdges){
+        //randomise edge order
+        unsigned seed = chrono::system_clock::now().time_since_epoch().count();
+        shuffle(faceEdges.begin(), faceEdges.end(), default_random_engine(seed));
+        for(const shared_ptr<HalfEdge> &halfEdge : faceEdges){
             Vector4f position4f;
             position4f.head(3) = halfEdge->vertex->position;
             position4f[3] = 1;
@@ -835,7 +820,7 @@ namespace seidel{
         }
         shared_ptr<Node> tree;
         //get arbitrary edge from list of edges
-        for(shared_ptr<HalfEdge> edge : faceEdges){
+        for(const shared_ptr<HalfEdge> &edge : faceEdges){
             //get edge vertices
             shared_ptr<Vertex> v1 = edge->vertex;
             shared_ptr<Vertex> v2 = edge->next->vertex;
@@ -862,9 +847,6 @@ namespace seidel{
         //and set their validatiy
         vector<shared_ptr<Trapezoid>> trapezoids;
         stack<shared_ptr<Node>> nodeStack;
-        if(!tree){
-            cerr << "seidel root node not initilised\n";
-        }
         nodeStack.push(tree);
         while(!nodeStack.empty()) {
             shared_ptr<Node> node = nodeStack.top(); 
@@ -881,7 +863,7 @@ namespace seidel{
             }
         }
         //transform trapezoids into triangles
-        for(shared_ptr<Trapezoid> trap : trapezoids){
+        for(const shared_ptr<Trapezoid> &trap : trapezoids){
             if(!trap->validState){
                 continue;
             }
@@ -949,136 +931,282 @@ namespace seidel{
         return triangles;
     }
     
+    struct PlaneSegment{
+        Vector3f normal;
+        Vector3f planePoint;
+        shared_ptr<HalfEdge> start;
+        shared_ptr<HalfEdge> End;
+    };
+
+    bool facePlanar(PlaneSegment &plane, const shared_ptr<HalfEdge> &halfEdge, set<int> visited = {}){
+        shared_ptr<HalfEdge> adjacentHalfEdge;
+        Vector3f currentVector = halfEdge->next->vertex->position - halfEdge->vertex->position;
+        Vector3f planePoint = halfEdge->vertex->position;
+        Vector3f adjacentVector, normal;
+        adjacentHalfEdge = halfEdge->next;
+        bool checkReverse = false;
+        bool faceLine = true;
+        //get closest halfedge that hasn't already been visited and is not colinear
+        //first look forwards
+        do{
+            if(visited.count(adjacentHalfEdge->id) == 0){
+                //get the equation for the current plane using the half edges as vectors
+                adjacentVector = adjacentHalfEdge->next->vertex->position - adjacentHalfEdge->vertex->position;
+                normal = currentVector.cross(adjacentVector).normalized();
+                if(normal.squaredNorm() > FLT_EPSILON * FLT_EPSILON){
+                    faceLine = false;
+                    break;
+                }
+                adjacentHalfEdge = adjacentHalfEdge->next;
+            }
+            else{
+                checkReverse = true;
+                break;
+            }
+        }while(adjacentHalfEdge->id != halfEdge->id);
+        //then if havn't found good halfEdge look backwards
+        if(checkReverse){
+            adjacentHalfEdge = halfEdge->previous.lock();
+            do{
+                if(visited.count(adjacentHalfEdge->id) == 0){
+                    adjacentVector = adjacentHalfEdge->next->vertex->position - adjacentHalfEdge->vertex->position;
+                    normal = currentVector.cross(adjacentVector).normalized();
+                    if(normal.squaredNorm() > FLT_EPSILON * FLT_EPSILON){
+                        faceLine = false;
+                        break;
+                    }
+                    adjacentHalfEdge = adjacentHalfEdge->previous.lock();
+                }
+                else{
+                    throw(string("no way to make face planar"));
+                }
+            }while(adjacentHalfEdge->id != halfEdge->id);
+        }
+        //deal with case where face is close to being a line
+        if(faceLine){
+            plane.End = halfEdge;
+            plane.start = halfEdge;
+            plane.planePoint = halfEdge->vertex->position;
+            Vector3f line = halfEdge->next->vertex->position - halfEdge->vertex->position;
+            if(line.cross(Vector3f(1, 0, 0)).squaredNorm() > FLT_EPSILON * FLT_EPSILON){
+                plane.normal = line.cross(Vector3f(1, 0, 0)).normalized();
+            }
+            else{
+                plane.normal = line.cross(Vector3f(0, 1, 0)).normalized();
+            }
+            return true;
+        }
+
+        //now that we have the plane we need to find all the start and ends points of the segment
+        shared_ptr<HalfEdge> start;
+        shared_ptr<HalfEdge> end;
+        shared_ptr<HalfEdge> current = halfEdge;
+        int currentID = current->id;
+        bool fullLoop = true;
+        //first find the end of this planar section if it exists
+        do{
+            end = current;
+            Vector3f nextPos = current->next->next->vertex->position;
+            if((nextPos - planePoint).dot(normal) > FLT_EPSILON){
+                fullLoop = false;
+                break;
+            }
+            current = current->next;
+        }while(currentID != current->id);
+        if(!fullLoop){
+             //then if the section is not closed find the start of this planar section
+             current = halfEdge;
+             do{
+                start = current;
+                shared_ptr<HalfEdge> previous = current->previous.lock();
+                Vector3f previousPos = previous->vertex->position;
+                if((previousPos - planePoint).dot(normal) > FLT_EPSILON){
+                    break;
+                }
+                current = previous;
+             }while(currentID != current->id);
+        }
+        else{
+            start = end;
+        }
+        plane.End = end;
+        plane.start = start;
+        plane.normal = normal;
+        plane.planePoint = halfEdge->vertex->position;
+        if(start->id == end->id){
+            return true;
+        }
+        else{
+            return false;
+        }
+    }
+
     //breaks a face into its planar segments
-    vector<shared_ptr<Face>> planarDecompose(const shared_ptr<Face> &face){
+    vector<shared_ptr<Face>> planarDecompose(const shared_ptr<Face> &face, int &oldFaceID){
         //first check if face is planar
         vector<shared_ptr<Vertex>> vertices = face->getVertices();
         Vector3f pNormal = (vertices[1]->position - vertices[0]->position).cross(vertices[2]->position - vertices[0]->position);
         bool planar = true;
         for(int i = 3; i < vertices.size(); ++i){
-            if((vertices[i]->position - vertices[0]->position).dot(pNormal) != 0){
+            if((vertices[i]->position - vertices[0]->position).dot(pNormal) > FLT_EPSILON){
                 planar = false;
                 break;
             }
         }
         //if face is already planar just return the face
-        if(planar){
+        PlaneSegment t;
+        if(facePlanar(t, face->halfEdge.lock())){
             return {face};
         }
+        //get max halfEdgeid number
+        int halfEdgeID = 0;
+        for(const shared_ptr<HalfEdge> &halfEdge : face->getHalfEdges()){
+            int tempID = halfEdge->id;
+            if(tempID > halfEdgeID){
+                halfEdgeID = tempID;
+            }
+        }
+        halfEdgeID += 1;
 
         set<int> visited;
         stack<shared_ptr<HalfEdge>> halfEdgeStack;
         vector<shared_ptr<Face>> planarFaces;
         while(!halfEdgeStack.empty()){
-            shared_ptr<HalfEdge> a = halfEdgeStack.top();
+            shared_ptr<HalfEdge> currentHalfEdge = halfEdgeStack.top();
             halfEdgeStack.pop();
-            shared_ptr<HalfEdge> b;
-            if(visited.count(a->next->id) == 0){
-                b = a->next;
+            //if already done this halfEdge continue
+            if(visited.count(currentHalfEdge->id) != 0){
+                continue;
             }
-            else{
-                shared_ptr<HalfEdge> temp = a->previous.lock();
-                if(visited.count(temp->id) == 0){
-                    b = temp;
-                }
-                else{
-                    throw("no way to make face planar");
-                }
+            visited.insert(currentHalfEdge->id); 
+            PlaneSegment currentPlane;
+            bool restPlanar = facePlanar(currentPlane, currentHalfEdge, visited);
+                       
+            if(!restPlanar){
+                //then if the section is not closed find the start of this planar section
+                shared_ptr<HalfEdge> remainderStart = currentPlane.End->next;
+                shared_ptr<HalfEdge> remainderEnd = currentPlane.start->previous.lock();
+                //close new face and old face
+                shared_ptr<HalfEdge> newPlanarHalfEdge = make_shared<HalfEdge>(HalfEdge(halfEdgeID++));
+                shared_ptr<HalfEdge> newRemainderHalfEdge = make_shared<HalfEdge>(HalfEdge(halfEdgeID++));
+                //make planar half edge
+                newPlanarHalfEdge->previous = currentPlane.End;
+                newPlanarHalfEdge->next = currentPlane.start;
+                newPlanarHalfEdge->vertex = remainderStart->vertex;
+                currentPlane.End->next = newPlanarHalfEdge;
+                currentPlane.start->previous = newPlanarHalfEdge;
+                newPlanarHalfEdge->twin = newRemainderHalfEdge;
+                //make half edge for remainder of old face
+                newRemainderHalfEdge->previous = remainderEnd;
+                newRemainderHalfEdge->next = remainderStart;
+                newRemainderHalfEdge->vertex = currentPlane.start->vertex;
+                remainderEnd->next = newRemainderHalfEdge;
+                remainderStart->previous = newRemainderHalfEdge;
+                newRemainderHalfEdge->twin = newPlanarHalfEdge;
+
+                //add remainder start and remainder end to stack
+                halfEdgeStack.push(remainderStart);
+                halfEdgeStack.push(remainderEnd);
             }
-            //get the equation for the current plane using the half edges as vectors
-            Vector3f vecA = a->next->vertex->position - a->vertex->position;
-            Vector3f vecB = b->next->vertex->position - b->vertex->position;
-            Vector3f planeNormal = vecA.cross(vecB).normalized();
-            Vector3f planePoint = a->vertex->position;
-            set<shared_ptr<HalfEdge>> currentFace;
-            shared_ptr<HalfEdge> planarFaceStart;
-            shared_ptr<HalfEdge> planarFaceEnd;
-            //first forward
-            shared_ptr<HalfEdge> current = a;
-            while(true){
-                planarFaceEnd = current;
-                currentFace.insert(current);
-                Vector3f nextPos = current->next->next->vertex->position;
-                if((nextPos - planePoint).dot(planeNormal) != 0){
-                    break;
-                }
+            shared_ptr<Face> planarFace = make_shared<Face>(oldFaceID++);
+            planarFace->normal = currentPlane.normal;
+            planarFace->halfEdge = currentHalfEdge;
+            shared_ptr<HalfEdge> current = currentPlane.start;
+            int startID = current->id;
+            do{
+                current->face = planarFace;
                 current = current->next;
-            }
-            //then backwards
-            shared_ptr<HalfEdge> current = a;
-            while(true){
-                planarFaceStart = current;
-                currentFace.insert(current);
-                shared_ptr<HalfEdge> previous = current->previous.lock();
-                Vector3f previousPos = previous->vertex->position;
-                if((previousPos - planePoint).dot(planeNormal) != 0){
-                    break;
-                }
-                current = previous;
-            }
-            shared_ptr<HalfEdge> remainderFaceStart = planarFaceEnd->next;
-            shared_ptr<HalfEdge> remainderFaceEnd = planarFaceStart->previous.lock();
-            
+            }while(current->id != startID);
         }
         return planarFaces;
     }
 
+    inline Vector3f xInterceptFinder(Vector3f origin, Vector3f dest, float xIntercept){
+        float dx = dest.x() - origin.x();
+        if (std::fabs(dx) < FLT_EPSILON){
+            //not quite accurate, but close enough for edge case
+            return origin;
+        }
+        float mult = (xIntercept - origin.x()) / (dest.x() - origin.x());
+        return origin + (mult * (dest - origin));
+    }
+
     //checks if a given face has a self intersection and returns a list of the points they occur
     //and the edges they occur on
-    vector<pair<Vector3f, vector<shared_ptr<HalfEdge>>>> selfIntersectChecker(const shared_ptr<Face> &face){
+    vector<pair<vector<int>, Vector3f>> selfIntersectChecker(const shared_ptr<Face> &face){
+        struct Edge{
+            int id, nextID;
+            Vector3f a, b;
+            float minX, maxX;
+            Edge(int _id, int _nID, Vector3f _a, Vector3f _b): id(_id), nextID(_nID), a(_a), b(_b){
+                minX = min({a.x(), b.x()});
+                maxX = max({a.x(), b.x()});
+            }
+            bool operator<(Edge const& o) const { 
+                return minX < o.minX;
+              }
+        };
         //using alogrithm found here:
         //https://www.wyzant.com/resources/answers/696697/check-if-polygon-is-self-intersecting
-        //get pairs of nonAdjacent edges
-        vector<shared_ptr<HalfEdge>> halfEdges = face->getHalfEdges();
-        set<vector<shared_ptr<HalfEdge>>> edgePairs;
-        vector<pair<Vector3f, vector<shared_ptr<HalfEdge>>>> selfInteceptPoints;
+        //with some adjustments for efficency
+
+        vector<pair<vector<int>, Vector3f>> selfInteceptPoints;
         //intersection can only occur with 4 or more vertices
         if(face->getVertices().size() < 4){
             return selfInteceptPoints;
         }
-        //get all edge pairs which aren't neighbours
-        for(int i = 0; i < halfEdges.size(); ++i){
-            for(int j = i + 1; j < halfEdges.size(); ++j){
-                //check to make sure halfedges are not neighbours
-                if(halfEdges[i]->next->id == halfEdges[j]->id || halfEdges[j]->next->id == halfEdges[i]->id){
-                    continue;
-                }
-                //check to make sure halfEdges are not in set in other order
-                if(edgePairs.count({halfEdges[j], halfEdges[i]}) != 0){
-                    continue;
-                }
-                edgePairs.insert({halfEdges[i], halfEdges[j]});
-            }
+        //make Edges
+        vector<Edge> edges;
+        for(const shared_ptr<HalfEdge> &halfEdge: face->getHalfEdges()){
+            edges.push_back(Edge(halfEdge->id, halfEdge->next->id, halfEdge->vertex->position, halfEdge->next->vertex->position));
         }
-        //check if edge pairs intersect eachother
-        for(vector<shared_ptr<HalfEdge>> edgePair : edgePairs){
-            shared_ptr<HalfEdge> he1 = edgePair[0];
-            shared_ptr<HalfEdge> he2 = edgePair[1];
-            vector<Vector3f> s1 = {he1->vertex->position, he1->next->vertex->position};
-            vector<Vector3f> s2 = {he2->vertex->position, he2->next->vertex->position};
-            float s1XMin = min({s1[0].x(), s1[1].x()});
-            float s1XMax = max({s1[0].x(), s1[1].x()});
-            float s2XMin = min({s2[0].x(), s2[1].x()});
-            float s2XMax = max({s2[0].x(), s2[1].x()});
-            float lowerMax = max({s1XMin, s2XMin});
-            float upperMin = min({s1XMax, s2XMax});
-            //check if overlap possible
-            if(lowerMax < upperMin){
-                float s1dx = s1[1].x() - s1[0].x();
-                float s1dy = s1[1].y() - s1[0].y();
-                float s2dx = s2[1].x() - s2[0].x();
-                float s2dy = s2[1].y() - s2[0].y();
-                float m1 = s1dy / s2dx;
-                float m2 = s2dy / s2dx;
+        sort(edges.begin(), edges.end(),
+              [](auto const& e1, auto const& e2){
+                  return e1.minX < e2.minX;
+              });
+
+        // active set sorted by maxX
+        set<Edge> active(edges.begin(), edges.end());
+        
+        for (const Edge &edge : edges) {
+            // Evict edges that end before this one starts
+            vector<Edge> toErase;
+            for(const Edge &aEdge : active) {
+                if(aEdge.maxX < aEdge.minX){
+                    toErase.push_back(aEdge);
+                }
+            }
+            for(const Edge &eEdge : toErase){
+                active.erase(eEdge);
+            }
+            // Test edge against everything left in active
+            for (const Edge &aEdge : active) {
+                //check to make sure edges aren't neighbours
+                if(edge.nextID == aEdge.id || aEdge.nextID == edge.id){
+                    continue;
+                }
+                if (aEdge.minX > edge.maxX) {
+                    continue;
+                }
+
+                float lowerMax = max({edge.minX, aEdge.minX});
+                float upperMin = min({edge.maxX, aEdge.maxX});
+
+                float edgeDx = edge.b.x() - edge.a.x();
+                float edgeDy = edge.b.y() - edge.a.y();
+                float aEdgeDx = aEdge.b.x() - aEdge.a.x();
+                float aEdgeDy = aEdge.b.y() - aEdge.a.y();
+                float m1 = edgeDy / edgeDx;
+                float m2 = aEdgeDy / aEdgeDx;
                 float x;
                 //first find at what x coord a possible intersection would have to be
-                if(s1dx == 0){
+                if(edgeDx == 0){
                     //if one of the sides is straight up and down the x intersection is given by that side
-                    x = s1[0].x();
+                    x = edge.a.x();
                 }
-                else if(s2dx == 0){
+                else if(aEdgeDx == 0){
                     //if one of the sides is straight up and down the x intersection is given by that side
-                    x = s2[0].x();
+                    x = aEdge.a.x();
                 }
                 else if(m1 == m2){
                     //if the lines are parrallel the x can be any x between lowerMax and upperMin
@@ -1092,31 +1220,29 @@ namespace seidel{
                     // y = (m2 * x) + b2
                     //where m = rise / run and b can be found by subsituting 1 end of each side
                     //we can solve for x using subsitution
-                    m1 = (s1dy / s2dx);
-                    m2 = (s2dy / s2dx);
-                    float b1 = s1[0].y() - (m1 * s1[0].x());
-                    float b2 = s2[0].y() - (m2 * s2[1].x());
+                    float b1 = edge.a.y() - (m1 * edge.a.x());
+                    float b2 = aEdge.a.y() - (m2 * aEdge.a.x());
                     x = (b1 - b2) / (m1 - m2);
                 }
-                Vector3f s1Intercept = xInterceptFinder(s1[0], s1[1], x);
-                Vector3f s2Intercept = xInterceptFinder(s2[0], s2[1], x);
+                Vector3f s1Intercept = xInterceptFinder(edge.a, edge.b, x);
+                Vector3f s2Intercept = xInterceptFinder(aEdge.a, aEdge.b, x);
                 //just need to check to see if intercepts are the same to see if there is a self intersection here
-                if(s1Intercept == s2Intercept){
-                    selfInteceptPoints.push_back({s1Intercept, {he1, he2}});
+                if((s1Intercept - s2Intercept).norm() > FLT_EPSILON){
+                    selfInteceptPoints.push_back({{edge.id, aEdge.id}, s1Intercept});
                 }
             }
+            active.insert(edge);
         }
         return selfInteceptPoints;
     }
 
-    vector<vector<Point>> triangulate(const shared_ptr<Face> &face){
+    vector<vector<Point>> triangulate(const shared_ptr<Face> &face, int &oldFaceID){
         vector<vector<Point>> triangles;
         //check how many sides current face has
         shared_ptr<HalfEdge> HalfEdge = face->halfEdge.lock();
         auto current = HalfEdge;
         int startID = current->id;
         int numEdges = 0;
-        int selfIntersectAmount = selfIntersectChecker(face).size();
         do{
             current = current->next;
             numEdges += 1;
@@ -1130,7 +1256,7 @@ namespace seidel{
             triangles.push_back({a, b, c});
         }
         //if it is a quad and has no self intersections use basic quad triangulation
-        else if (numEdges == 4){// && selfIntersectAmount == 0){
+        else if (numEdges == 4 && selfIntersectChecker(face).size() == 0){
             //for left and right edges all that matters is that they are opposite edges actual orientation doesn't matter
             Point leftOrigin = Point(HalfEdge->vertex);
             Point leftDest = Point(HalfEdge->next->vertex);
@@ -1141,8 +1267,7 @@ namespace seidel{
         //else use Seidel's
         else{
             //first break face into planar faces
-            vector<shared_ptr<Face>> planarFaces = planarDecompose(face);
-            for(shared_ptr<Face> planarFace : planarFaces){
+            for(const shared_ptr<Face> &planarFace : planarDecompose(face, oldFaceID)){
                 //then triangulate planar faces
                 vector<vector<Point>> temp = seidel(planarFace);
                 triangles.insert(triangles.end(), temp.begin(), temp.end());
@@ -1162,11 +1287,21 @@ void makeObjectTri(Object &object){
     vertexID = faceID = halfEdgeID = 0;
     map<int, vector<shared_ptr<HalfEdge>>> halfEdgesByDestination;
 
+    ///get max Faceid number
+    int oldFaceID = 0;
+    for(const shared_ptr<Face> &face : object.faces){
+        int tempID = face->id;
+        if(tempID > oldFaceID){
+            oldFaceID = tempID;
+        }
+    }
+    oldFaceID += 1;
+
     auto makeFaceTri = [&](const shared_ptr<Face> face) -> void{
-        vector<vector<seidel::Point>> faceTriangles = seidel::triangulate(face);
-        for(vector<seidel::Point> triangle : faceTriangles){
+        vector<vector<seidel::Point>> faceTriangles = seidel::triangulate(face, oldFaceID);
+        for(const vector<seidel::Point> &triangle : faceTriangles){
             vector<int> faceCoords = {};
-            for(seidel::Point point : triangle){
+            for(const seidel::Point &point : triangle){
                 Vector3f position = point.position;
                 vector<float> vectorPoint = {position.x(), position.y(), position.z()};
                 if(vertexIndex.count(vectorPoint) == 0){
@@ -1179,15 +1314,15 @@ void makeObjectTri(Object &object){
         }
         vertices.resize(vertexIndex.size());
 
-        for(vector<seidel::Point> faceCoords : faceTriangles){
+        for(const vector<seidel::Point> &faceCoords : faceTriangles){
             shared_ptr<Face> face = make_shared<Face>(Face(faceID++));
             shared_ptr<HalfEdge> previous = nullptr;
             shared_ptr<Vertex> firstVertex;
             shared_ptr<HalfEdge> firstHalfEdge;
-            for(seidel::Point point: faceCoords){
+            for(const seidel::Point &point: faceCoords){
                 Vector3f position = point.position;
                 int vertexNum =vertexIndex[{position.x(), position.y(), position.z()}];
-                shared_ptr<HalfEdge> halfEdge = make_shared<HalfEdge>(HalfEdge(faceID++));
+                shared_ptr<HalfEdge> halfEdge = make_shared<HalfEdge>(HalfEdge(halfEdgeID++));
                 if(previous != nullptr){
                     previous->next = halfEdge;
                     halfEdge->previous = previous;
@@ -1230,12 +1365,12 @@ void makeObjectTri(Object &object){
     for(int i = 0; i < object.faces.size(); ++i){
         makeFaceTri(object.faces[i]);
     }
-    for(shared_ptr<HalfEdge> halfEdge : halfEdges){
+    for(const shared_ptr<HalfEdge> &halfEdge : halfEdges){
         shared_ptr<HalfEdge> twin = halfEdge->twin.lock();
         if(!twin){
             int origin = halfEdge->vertex->id;
             int destination = halfEdge->next->vertex->id;
-            for (shared_ptr<HalfEdge> twin : halfEdgesByDestination[origin]){
+            for(const shared_ptr<HalfEdge> &twin : halfEdgesByDestination[origin]){
                 if(twin->vertex->id == destination){
                     if(!twin->twin.lock()){
                         halfEdge->twin = twin;

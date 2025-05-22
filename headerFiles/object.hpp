@@ -12,7 +12,7 @@ class Vertex;
 
 class HalfEdge{
     public:
-        int id; //unique within object
+        int id; //unique within face
         std::shared_ptr<HalfEdge> next;
         std::weak_ptr<HalfEdge> previous; //make doubly linked, as being singly linked is stupid
         std::weak_ptr<HalfEdge> twin;
@@ -55,7 +55,7 @@ class Face{
 
 class Vertex{
     public:
-        int id; //unique within object
+        int id; //unique within face
         std::weak_ptr<HalfEdge> halfEdge;
         Eigen::Vector3f position;
         Eigen::Vector3f normal = Eigen::Vector3f(0, 0, 0);
@@ -83,6 +83,7 @@ class Vertex{
         Vertex(){}
 
         // Get all the half edges that originate from this vertex
+        //assumes that vertex is manifold
         std::vector<std::shared_ptr<HalfEdge>> neighbourHalfEdges() {
             std::vector<std::shared_ptr<HalfEdge>> neighbourhood;
             auto he = this->halfEdge;
