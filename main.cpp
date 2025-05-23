@@ -11,9 +11,7 @@
 #include <rasterizer.hpp>
 #include <camera.hpp>
 #include <shader.hpp>
-
-#include <loadModel.cpp>
-#include <shader.cpp>
+#include <loadModel.hpp>
 
 using namespace std;
 using namespace Eigen;

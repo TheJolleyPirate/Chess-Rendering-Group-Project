@@ -2,27 +2,8 @@
 #include <object.hpp>
 #include <cfloat>
 
-bool objectClosed(const Object &object);
-
-void makeObjectClosed(Object &object);
-
-bool facesClosed(const Object &object);
-
-bool objectConnected(const Object &object);
-
-void makeObjectConnected(Object &object);
-
-bool objectManifold(const Object &object);
-
-void makeObjectManifold(Object &object);
-
-bool objectFacesConsistent(const Object &object);
-
-void makeObjectFacesConsistent(Object &object);
-
-bool objectTri(const Object &object);
-
-void makeObjectTri(Object &object);
+void checkMesh(Object &object, const std::string &fileName);
+bool saveMeshASOBJ(const Object &object);
 
 class Node;
 class Trapezoid;
@@ -38,7 +19,7 @@ class Node{
         };
         enum NodeType nodeType;
         std::weak_ptr<Vertex> vertex; //the vertex this represents if nodetype is vertex
-        std::weak_ptr<HalfEdge> edge; //the edge this represents if nodetype is edge
+        std::shared_ptr<HalfEdge> edge; //the edge this represents if nodetype is edge
         std::shared_ptr<Trapezoid> trapezoid; //the trapezoid this represents if nodetype is trapezoid
         const int id; //unique node id
         std::shared_ptr<Node> left; //left child node
@@ -51,8 +32,8 @@ class Trapezoid{
     public:
         std::vector<std::shared_ptr<Trapezoid>> up; //trapezoids directly above this one
         std::vector<std::shared_ptr<Trapezoid>> down; //trapezoids directly below this one
-        std::weak_ptr<HalfEdge> lseg; //left edge
-        std::weak_ptr<HalfEdge> rseg; //right edge
+        std::shared_ptr<HalfEdge> lseg; //left edge
+        std::shared_ptr<HalfEdge> rseg; //right edge
         std::weak_ptr<Node> sink; //Position of trapezoid in tree structure
         bool validState; //Represents validity of trapezoid (Inside or outside)
         const int id; //unique ID for this Trapezoid
@@ -69,7 +50,7 @@ class Trapezoid{
             std::shared_ptr<Node> node = weakNode.lock();
             int previous = node->id;
             std::shared_ptr<Node> current = node->parent.lock();
-            std::weak_ptr<HalfEdge> edge;
+            std::shared_ptr<HalfEdge> edge;
             if(!current){
                 return;
             }
@@ -92,7 +73,7 @@ class Trapezoid{
             std::shared_ptr<Node> node = weakNode.lock();
             int previous = node->id;
             std::shared_ptr<Node> current = node->parent.lock();
-            std::weak_ptr<HalfEdge> edge;
+            std::shared_ptr<HalfEdge> edge;
             if(!current){
                 return;
             }
@@ -112,8 +93,8 @@ class Trapezoid{
             this->rseg = edge;
         }
         bool inPolygon(){
-            if(lseg.lock() == nullptr || rseg.lock() == nullptr){
-                validState = false;
+            validState = false;
+            if(!lseg || !rseg || !highRay || !lowRay){
                 return false;
             }
             //get current node from trapezoid
@@ -139,7 +120,6 @@ class Trapezoid{
             int counter = 0;
             findAdjacentTrapezoid(currentNode, directionLeft, counter);
             if(counter % 2 == 0){
-                validState = false;
                 return false;
             }
             else{
@@ -162,7 +142,7 @@ class Trapezoid{
                 if(currentNode->nodeType == Node::TRAPAZOID){
                     counter += 1;
                     //check if tree outside polygon
-                    if(currentNode->trapezoid->lseg.lock() && currentNode->trapezoid->rseg.lock()){
+                    if(currentNode->trapezoid->lseg && currentNode->trapezoid->rseg){
                         //get segment according to direction
                         while(true){
                             int previous = currentNode->id;
@@ -213,27 +193,30 @@ class SeidelRay{
         Eigen::Vector3f leftEnd; //point ray terminates in -x direction
         Eigen::Vector3f rightEnd; //point ray terminates in +x direction
         float yValue; //the y value of the ray
-        SeidelRay(std::shared_ptr<Vertex> start, std::vector<std::shared_ptr<HalfEdge>> faceEdges){
-            int yValue = start->position.y();
+        SeidelRay(std::shared_ptr<Vertex> start, std::vector<std::shared_ptr<HalfEdge>> faceEdges, std::map<int, Eigen::Vector3f> &rotatedPos){
+            yValue = rotatedPos[start->id].y();
             float rightX = FLT_MAX;
-            Eigen::Vector3f rightEnd = start->position;
+            rightEnd = rotatedPos[start->id];
             float leftX = -FLT_MAX;
-            Eigen::Vector3f leftEnd = start->position;
+            leftEnd = rightEnd;
+            this->start = start;
             for(std::shared_ptr<HalfEdge> halfEdge : faceEdges){
-                Eigen::Vector3f origin = halfEdge->vertex->position;
-                Eigen::Vector3f dest = halfEdge->next->vertex->position;
+                Eigen::Vector3f origin = rotatedPos[halfEdge->vertex->id];
+                Eigen::Vector3f dest = rotatedPos[halfEdge->next->vertex->id];
                 //if yValue between origin and dest
                 if((origin.y() > yValue && yValue > dest.y()) || (origin.y() < yValue && yValue < dest.y())){
                     float yOrigin = origin.y();
                     float yDest = dest.y();
                     float dy = yDest - yOrigin;
-                    if(std::abs(dy) < 1e-8f){
-                        if(yValue == yOrigin || yValue == yDest){
+                    // if dy is roughly equal to 0
+                    if(std::fabs(dy) < FLT_EPSILON){
+                        //if yvalue roughly equal to either yorigin or ydest
+                        if(std::fabs(yValue - yOrigin) > FLT_EPSILON || std::fabs(yValue - yDest) > FLT_EPSILON){
                             if(origin.x() < dest.x()){
-                                if(origin.x() > start->position.x() && origin.x() < rightX){
+                                if(origin.x() > rotatedPos[start->id].x() && origin.x() < rightX){
                                     rightEnd = origin;
                                 }
-                                if(dest.x() < start->position.x() && dest.x() > leftX){
+                                if(dest.x() < rotatedPos[start->id].x() && dest.x() > leftX){
                                     leftEnd = dest;
                                 }
                             }
@@ -242,18 +225,14 @@ class SeidelRay{
                     else{
                         float mult = (yValue - yOrigin) / dy;
                         Eigen::Vector3f intercept = origin + (mult * (dest - origin));
-                        if(intercept.x() > start->position.x() && intercept.x() < rightX){
+                        if(intercept.x() > rotatedPos[start->id].x() && intercept.x() < rightX){
                             rightEnd = intercept;
                         }
-                        if(intercept.x() < start->position.x() && intercept.x() > leftX){
+                        if(intercept.x() < rotatedPos[start->id].x() && intercept.x() > leftX){
                             leftEnd = intercept;
                         }
                     }
                 }
             }
-            this->start = start;
-            this->yValue = yValue;
-            this->rightEnd = rightEnd;
-            this->leftEnd = leftEnd;
         }
 };

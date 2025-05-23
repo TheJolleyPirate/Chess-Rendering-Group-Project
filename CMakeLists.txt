@@ -27,6 +27,9 @@ add_library(supplemental SHARED
 add_executable(chessRenderer main.cpp)
 target_link_libraries(chessRenderer ${OpenCV_LIBRARIES} supplemental)
 
+add_executable(checkMesh src/meshChecker.cpp)
+target_link_libraries(checkMesh ${OpenCV_LIBRARIES} supplemental)
+
 #add more executables as required for testing:
 #example:
 #add_executable(test1 test1.cpp ${OpenCV_LIBRARIES} supplemental)

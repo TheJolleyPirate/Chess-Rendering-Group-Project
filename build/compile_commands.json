@@ -34,5 +34,11 @@
   "command": "/usr/bin/g++ -I/usr/include/eigen3 -I\"/home/danny/Desktop/Projects/computer graphics/Chess-Rendering-Group-Project\" -I\"/home/danny/Desktop/Projects/computer graphics/Chess-Rendering-Group-Project/headerFiles\" -I\"/home/danny/Desktop/Projects/computer graphics/Chess-Rendering-Group-Project/src\" -isystem /usr/include/opencv4 -g -std=gnu++17 -o CMakeFiles/chessRenderer.dir/main.cpp.o -c \"/home/danny/Desktop/Projects/computer graphics/Chess-Rendering-Group-Project/main.cpp\"",
   "file": "/home/danny/Desktop/Projects/computer graphics/Chess-Rendering-Group-Project/main.cpp",
   "output": "CMakeFiles/chessRenderer.dir/main.cpp.o"
+},
+{
+  "directory": "/home/danny/Desktop/Projects/computer graphics/Chess-Rendering-Group-Project/build",
+  "command": "/usr/bin/g++ -I/usr/include/eigen3 -I\"/home/danny/Desktop/Projects/computer graphics/Chess-Rendering-Group-Project\" -I\"/home/danny/Desktop/Projects/computer graphics/Chess-Rendering-Group-Project/headerFiles\" -I\"/home/danny/Desktop/Projects/computer graphics/Chess-Rendering-Group-Project/src\" -isystem /usr/include/opencv4 -g -std=gnu++17 -o CMakeFiles/checkMesh.dir/src/meshChecker.cpp.o -c \"/home/danny/Desktop/Projects/computer graphics/Chess-Rendering-Group-Project/src/meshChecker.cpp\"",
+  "file": "/home/danny/Desktop/Projects/computer graphics/Chess-Rendering-Group-Project/src/meshChecker.cpp",
+  "output": "CMakeFiles/checkMesh.dir/src/meshChecker.cpp.o"
 }
 ]

@@ -101,12 +101,17 @@ class Vertex{
             }
             return this->normal;
         }
+
+        bool operator < (const Vertex &other) const {
+            return id < other.id;
+        }
 };
 
 class Material{
     public:
         Eigen::Vector3f colour;
         std::string diffuseTextureFile;
+        std::string mtlFile;
         //below are optional
         std::string specularTextureFile;
         std::string ambiantTextureFile;
@@ -165,4 +170,5 @@ class Object{
         std::vector<std::shared_ptr<HalfEdge>> halfEdges;
         std::vector<std::shared_ptr<Vertex>> vertices;
         Material material;
+        std::string objFile;
 };

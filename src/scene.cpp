@@ -1,10 +1,11 @@
-#include "scene.hpp"
-#include "json.hpp"
-#include "shader.hpp"
 #include <fstream>
 #include <iostream>
 #include <memory>
 #include <Eigen/Dense>
+
+#include <scene.hpp>
+#include <json.hpp>
+#include <shader.hpp>
 
 using namespace std;
 using namespace Eigen;

@@ -19,3 +19,5 @@ struct fragment_shader_payload
     std::vector<Light> view_lights;
     Texture* texture;
 };
+
+Eigen::Vector3f texture_fragment_shader(const fragment_shader_payload &payload);
