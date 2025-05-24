@@ -15,6 +15,16 @@
 using namespace std;
 using namespace Eigen;
 
+float round1e4(float value) {
+    return round(value * 10000.0f) / 10000.0f;
+  }
+Vector3f round1e4(Vector3f value){
+    return Vector3f(round1e4(value.x()), round1e4(value.y()), round1e4(value.z()));
+}
+Vector2f round1e4(Vector2f value){
+    return Vector2f(round1e4(value.x()), round1e4(value.y()));
+}
+
 bool objectClosed(const Object &object){
     for(const shared_ptr<HalfEdge> &halfEdge : object.halfEdges){
         if(!halfEdge->face){
@@ -454,7 +464,7 @@ namespace seidel{
             normal = vert->normal;
         }
         Point(Vector3f _position, Vector3f _colour, Vector2f _textureCoords, Vector3f _normal):
-         position(_position), colour(_colour), textureCoords(_textureCoords), normal(_normal){}
+         position(round1e4(_position)), colour(round1e4(_colour)), textureCoords(round1e4(_textureCoords)), normal(round1e4(_normal)){}
         Point(){}
         bool operator==(const Point &other) const{
             auto lhs = tie(
@@ -490,6 +500,12 @@ namespace seidel{
         shared_ptr<HalfEdge> start;
         shared_ptr<HalfEdge> End;
     };
+
+    Eigen::Vector3f getValue(int key,  std::map<int, Eigen::Vector3f> &rotatedPos){
+        auto it = rotatedPos.find(key);
+        assert(it != rotatedPos.end());
+        return it->second;
+    }
 
     vector<vector<Point>> triangulateQuad(Point A, Point B, Point C, Point D){
         vector<vector<Point>> triangles;
@@ -571,8 +587,8 @@ namespace seidel{
         shared_ptr<Node> currentNode = tree;
         while(true){
             if(currentNode->nodeType == Node::VERTEX){
-                Vector3f a = rotatedPos[vert->id];
-                Vector3f b = rotatedPos[currentNode->vertex.lock()->id];
+                Vector3f a = getValue(vert->id, rotatedPos);
+                Vector3f b = getValue(currentNode->vertex.lock()->id, rotatedPos);
                 if(a == b){
                     return currentNode;
                 }
@@ -586,13 +602,13 @@ namespace seidel{
             else if(currentNode->nodeType == Node::EDGE){
                 //need to interpolate to find which side of an edge a vertex is
                 shared_ptr<HalfEdge> e = currentNode->edge;
-                Vector3f origin = rotatedPos[e->vertex->id];
-                Vector3f dest = rotatedPos[e->next->vertex->id];
+                Vector3f origin = getValue(e->vertex->id, rotatedPos);
+                Vector3f dest = getValue(e->next->vertex->id, rotatedPos);
                 float yValue = rotatedPos[vert->id].y();
                 Vector3f unitVector = (dest - origin).normalized();
                 float mult = (yValue - origin.y()) / unitVector.y();
                 Vector3f intercept = origin + (unitVector * mult);
-                Vector3f a = rotatedPos[vert->id];
+                Vector3f a = getValue(vert->id, rotatedPos);
                 Vector3f b = intercept;
                     if(a.x() > b.x() || (a.x() == b.x() && tieBreak(a, b) == a)){
                         currentNode = currentNode->right;
@@ -668,8 +684,8 @@ namespace seidel{
                 lowerLeftAbove = -FLT_MAX;
             }
             else{
-                a = rotatedPos[lseg->vertex->id];
-                b = rotatedPos[lseg->next->vertex->id];
+                a = getValue(lseg->vertex->id, rotatedPos);
+                b = getValue(lseg->next->vertex->id, rotatedPos);
                 if(a.y() < b.y() || (a.y() == b.y() && tieBreak(a, b) == a)){
                     lowerLeftAbove = a.x();
                 }
@@ -685,8 +701,8 @@ namespace seidel{
                 lowerRightAbove = FLT_MAX;
             }
             else{
-                a = rotatedPos[rseg->vertex->id];
-                b = rotatedPos[rseg->next->vertex->id];
+                a = getValue(rseg->vertex->id, rotatedPos);
+                b = getValue(rseg->next->vertex->id, rotatedPos);
                 if(a.y() < b.y() || (a.y() == b.y() && tieBreak(a, b) == a)){
                     lowerRightAbove = a.x();
                 }
@@ -702,8 +718,8 @@ namespace seidel{
                     upperLeftChild = -FLT_MAX;
                 }
                 else{
-                    a = rotatedPos[lseg->vertex->id];
-                    b = rotatedPos[lseg->next->vertex->id];
+                    a = getValue(lseg->vertex->id, rotatedPos);
+                    b = getValue(lseg->next->vertex->id, rotatedPos);
                     if(a.y() > b.y() || (a.y() == b.y() && tieBreak(a, b) == a)){
                         upperLeftChild = a.x();
                     }
@@ -718,8 +734,8 @@ namespace seidel{
                     upperRightChild = FLT_MAX;
                 }
                 else{
-                    a = rotatedPos[rseg->vertex->id];
-                    b = rotatedPos[rseg->next->vertex->id];
+                    a = getValue(rseg->vertex->id, rotatedPos);
+                    b = getValue(rseg->next->vertex->id, rotatedPos);
                     if(a.y() > b.y() || (a.y() == b.y() && tieBreak(a, b) == a)){
                         upperRightChild = a.x();
                     }
@@ -744,8 +760,8 @@ namespace seidel{
                 upperLeftBelow = -FLT_MAX;
             }
             else{
-                a = rotatedPos[lseg->vertex->id];
-                b = rotatedPos[lseg->next->vertex->id];
+                a = getValue(lseg->vertex->id, rotatedPos);
+                b = getValue(lseg->next->vertex->id, rotatedPos);
                 if(a.y() > b.y() || (a.y() == b.y() && tieBreak(a, b) == a)){
                     upperLeftBelow = a.x();
                 }
@@ -760,8 +776,8 @@ namespace seidel{
                 upperRightBelow = FLT_MAX;
             }
             else{
-                a = rotatedPos[rseg->vertex->id];
-                b = rotatedPos[rseg->next->vertex->id];
+                a = getValue(rseg->vertex->id, rotatedPos);
+                b = getValue(rseg->next->vertex->id, rotatedPos);
                 if(a.y() > b.y() || (a.y() == b.y() && tieBreak(a, b) == a)){
                     upperRightBelow = a.x();
                 }
@@ -777,8 +793,8 @@ namespace seidel{
                     lowerLeftChild = -FLT_MAX;
                 }
                 else{
-                    a = rotatedPos[lseg->vertex->id];
-                    b = rotatedPos[lseg->next->vertex->id];
+                    a = getValue(lseg->vertex->id, rotatedPos);
+                    b = getValue(lseg->next->vertex->id, rotatedPos);
                     if(a.y() < b.y() || (a.y() == b.y() && tieBreak(a, b) == a)){
                         lowerLeftChild = a.x();
                     }
@@ -793,8 +809,8 @@ namespace seidel{
                     lowerRightChild = FLT_MAX;
                 }
                 else{
-                    a = rotatedPos[rseg->vertex->id];
-                    b = rotatedPos[rseg->next->vertex->id];
+                    a = getValue(rseg->vertex->id, rotatedPos);
+                    b = getValue(rseg->next->vertex->id, rotatedPos);
                     if(a.y() < b.y() || (a.y() == b.y() && tieBreak(a, b) == a)){
                         lowerRightChild = a.x();
                     }
@@ -820,8 +836,8 @@ namespace seidel{
             else if(currentNode->nodeType == Node::EDGE){
                 //compare top vertices
                 shared_ptr<Vertex> targetTop;
-                Vector3f o = rotatedPos[halfEdge->vertex->id];
-                Vector3f n = rotatedPos[halfEdge->next->vertex->id];
+                Vector3f o = getValue(halfEdge->vertex->id, rotatedPos);
+                Vector3f n = getValue(halfEdge->next->vertex->id, rotatedPos);
                 if(o.y() > n.y() || (o.y() == n.y() && tieBreak(o, n) == o)){
                     targetTop = halfEdge->vertex;
                 }
@@ -830,16 +846,16 @@ namespace seidel{
                 }
                 shared_ptr<Vertex> currentTop;
                 shared_ptr<HalfEdge> edge = currentNode->edge;
-                o = rotatedPos[edge->vertex->id];
-                n = rotatedPos[edge->next->vertex->id];
+                o = getValue(edge->vertex->id, rotatedPos);
+                n = getValue(edge->next->vertex->id, rotatedPos);
                 if(o.y() > n.y() || (o.y() == n.y() && tieBreak(o, n) == o)){
                     currentTop = edge->vertex;
                 }
                 else{
                     currentTop = edge->next->vertex;
                 }
-                Vector3f a = rotatedPos[targetTop->id];
-                Vector3f b = rotatedPos[currentTop->id];
+                Vector3f a = getValue(targetTop->id, rotatedPos);
+                Vector3f b = getValue(currentTop->id, rotatedPos);
                 if(a.x() > b.x() || (a.x() == b.x() && tieBreak(a, b) == a)){
                     currentNode = currentNode->right;
                 }
@@ -865,8 +881,8 @@ namespace seidel{
             else if(currentNode->nodeType == Node::EDGE){
                 //compare bottom vertices
                 shared_ptr<Vertex> targetBottom;
-                Vector3f o = rotatedPos[halfEdge->vertex->id];
-                Vector3f n = rotatedPos[halfEdge->next->vertex->id];
+                Vector3f o = getValue(halfEdge->vertex->id, rotatedPos);
+                Vector3f n = getValue(halfEdge->next->vertex->id, rotatedPos);
                 if(o.y() < n.y() || (o.y() == n.y() && tieBreak(o, n) == o)){
                     targetBottom = halfEdge->vertex;
                 }
@@ -875,16 +891,16 @@ namespace seidel{
                 }
                 shared_ptr<Vertex> currentBottom;
                 shared_ptr<HalfEdge> edge = currentNode->edge;
-                o = rotatedPos[edge->vertex->id];
-                n = rotatedPos[edge->next->vertex->id];
+                o = getValue(edge->vertex->id, rotatedPos);
+                n = getValue(edge->next->vertex->id, rotatedPos);
                 if(o.y() < n.y() || (o.y() == n.y() && tieBreak(o, n) == o)){
                     currentBottom = edge->vertex;
                 }
                 else{
                     currentBottom = edge->next->vertex;
                 }
-                Vector3f a = rotatedPos[targetBottom->id];
-                Vector3f b = rotatedPos[currentBottom->id];
+                Vector3f a = getValue(targetBottom->id, rotatedPos);
+                Vector3f b = getValue(currentBottom->id, rotatedPos);
                 if(a.x() > b.x() || (a.x() == b.x() && tieBreak(a, b) == a)){
                     currentNode = currentNode->right;
                 }
@@ -898,16 +914,19 @@ namespace seidel{
             }
         }
     }
-    
+
     inline Point yInterceptFinder(const shared_ptr<Vertex> origin, const shared_ptr<Vertex> dest, float yIntercept, bool fromPX, map<int, Vector3f> &rotatedPos){
-        Vector3f edgeVector = rotatedPos[dest->id] - rotatedPos[origin->id];
+        Vector3f rotatedOrigin = getValue(origin->id, rotatedPos);
+        Vector3f rotatedDest = getValue(dest->id, rotatedPos);
+        Vector3f edgeVector = rotatedDest - rotatedOrigin;
         Vector3f position;
         Vector3f colour;
         Vector2f textureCoords;
         Vector3f normal;
-        if (fabs(edgeVector.y()) < FLT_EPSILON) {
+        const float eps = 1e-6f * edgeVector.norm();  
+        if (fabs(edgeVector.y()) < eps) {
             if(fromPX){
-                if(rotatedPos[origin->id].x() > rotatedPos[dest->id].x()){
+                if(rotatedOrigin.x() > rotatedDest.x()){
                     position = origin->position;
                     colour = origin->colour;
                     textureCoords = origin->textureCoordinates;
@@ -921,7 +940,7 @@ namespace seidel{
                 }
             }
             else{
-                if(rotatedPos[origin->id].x() < rotatedPos[dest->id].x()){
+                if(rotatedOrigin.x() < rotatedDest.x()){
                     position = origin->position;
                     colour = origin->colour;
                     textureCoords = origin->textureCoordinates;
@@ -936,7 +955,11 @@ namespace seidel{
             }
         }
         else{
-            float mult = (yIntercept - rotatedPos[origin->id].y()) / (edgeVector.y());
+            //in rotated coords
+            float mult = (yIntercept - rotatedOrigin.y()) / (edgeVector.y());
+            mult = clamp(mult, 0.0f, 1.0f);//then clamp to [0,1]
+            
+            //in world coords
             position = origin->position + (mult * (dest->position - origin->position));
             colour = (origin->colour * (1 - mult)) + (dest->colour * mult);
             textureCoords = (origin->textureCoordinates * (1 - mult)) + (dest->textureCoordinates * mult);
@@ -989,8 +1012,8 @@ namespace seidel{
             shared_ptr<Vertex> v1 = edge->vertex;
             shared_ptr<Vertex> v2 = edge->next->vertex;
             //find higher and lower vertex
-            Vector3f a = rotatedPos[v1->id];
-            Vector3f b = rotatedPos[v2->id];
+            Vector3f a = getValue(v1->id, rotatedPos);
+            Vector3f b = getValue(v2->id, rotatedPos);
             shared_ptr<Vertex> higher;
             shared_ptr<Vertex> lower;
             if(a.y() > b.y() || (a.y() == b.y() && tieBreak(a, b) == a)){
@@ -1016,11 +1039,9 @@ namespace seidel{
             shared_ptr<Node> node = nodeStack.top(); 
             nodeStack.pop();
             if(node->nodeType == Node::TRAPAZOID){
-                node->trapezoid->setLeftEdge(node);
-                node->trapezoid->setRightEdge(node);
-                if(node->trapezoid->inPolygon()){
-                    trapezoids.push_back(node->trapezoid);
-                }
+                node->trapezoid->setEdges(node);
+                node->trapezoid->inPolygon();
+                trapezoids.push_back(node->trapezoid);
             }
             else{
                 nodeStack.push(node->left);
@@ -1352,6 +1373,46 @@ namespace seidel{
         return selfInteceptPoints;
     }
 
+    float polygonArea(const shared_ptr<Face> &face, Matrix4f rotation){
+        vector<Vector2f> points;
+        for(const shared_ptr<HalfEdge> halfEdge : face->getHalfEdges()){
+            Vector4f temp;
+            temp.head(3) = halfEdge->vertex->position;
+            temp[3] = 1;
+            temp = rotation * temp;
+            points.push_back(Vector2f(temp.x(), temp.y()));
+        }
+        int divid = points.size();
+        float a1 = 0;
+        float a2 = 0;
+        for(int i = 0; i < divid; ++i){
+            a1 += points[i].x() * points[(i + 1) % divid].y();
+            a2 += points[i].y() * points[(i + 1) % divid].x();
+        }
+        float area = 0.5 * fabs(a1 - a2);
+        return area;
+    }
+
+    float polygonArea(const vector<Point> &face, Matrix4f rotation){
+        vector<Vector2f> points;
+        for(const Point  &vertex : face){
+            Vector4f temp;
+            temp.head(3) = vertex.position;
+            temp[3] = 1;
+            temp = rotation * temp;
+            points.push_back(Vector2f(temp.x(), temp.y()));
+        }
+        int divid = points.size();
+        float a1 = 0;
+        float a2 = 0;
+        for(int i = 0; i < divid; ++i){
+            a1 += points[i].x() * points[(i + 1) % divid].y();
+            a2 += points[i].y() * points[(i + 1) % divid].x();
+        }
+        float area = 0.5 * fabs(a1 - a2);
+        return area;
+    }
+
     vector<vector<Point>> triangulate(const shared_ptr<Face> &face, int &oldFaceID){
         vector<vector<Point>> triangles;
         //check how many sides current face has
@@ -1364,7 +1425,7 @@ namespace seidel{
             numEdges += 1;
         }
         while(current->id != startID);
-
+        vector<pair<vector<int>, Vector3f>> intersections = selfIntersectChecker(face);
         //if it is already a triangle, return unchanged
         if(numEdges == 3){
             Point A = Point(HalfEdge->vertex);
@@ -1373,7 +1434,7 @@ namespace seidel{
             triangles.push_back({A, B, C});
         }
         //if it is a quad and has no self intersections use basic quad triangulation
-        else if (numEdges == 4 && selfIntersectChecker(face).size() == 0){
+        else if (numEdges == 4 && intersections.size() == 0){
             //for left and right edges all that matters is that they are opposite edges actual orientation doesn't matter
             Point A = Point(HalfEdge->vertex);
             Point B = Point(HalfEdge->next->vertex);
@@ -1390,7 +1451,14 @@ namespace seidel{
                 triangles.insert(triangles.end(), temp.begin(), temp.end());
             }
         }
-        return triangles;
+        vector<vector<Point>> goodTriangles;
+        for(vector<Point> tri : triangles){
+            if(tri[0] == tri[1] || tri[0] == tri[2] || tri[1] == tri[2]){
+                continue;
+            }
+            goodTriangles.push_back(tri);
+        }
+        return goodTriangles;
     }
 }
 
@@ -1668,6 +1736,7 @@ int main(int argc, char** argv){
     Object object;
     try{
         cout << "running\n";
+        cout << "\tloading " << filePath << "\n";
         mesh = loadFile(filePath);
         cout << "converting mesh to halfEdge\n";
         object = meshToHalfEdge(mesh);

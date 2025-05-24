@@ -5,6 +5,7 @@
 #include <map>
 #include "Eigen/Dense"
 #include <fstream>
+#include <set>
 
 #include <meshChecker.hpp>
 #include <object.hpp>
@@ -25,7 +26,6 @@ vector<string> split(const string &s, const char delim){
 }
 
 Material LoadMaterial(string path, string fileName){
-    cerr << "entered getVertexInfo\n";
     if(fileName.substr(fileName.size() - 4, 4) != ".mtl"){
         fileName.append(".mtl");
     }
@@ -129,11 +129,10 @@ Material LoadMaterial(string path, string fileName){
             material.bumpMapTextureFile = map;
         }
     }
-    cerr << "exited getVertexInfo\n";
     return material;
 }
 
-vector<int> getVertexInfo(vector<RawVertex> &vertices, const vector<string> &face, const vector<Vector3f> &positions, const vector<Vector2f> &tCoords, const vector<Vector3f> &normals){
+vector<int> getVertexInfo(set<RawVertex> &vertices, const vector<string> &face, const vector<Vector3f> &positions, const vector<Vector2f> &tCoords, const vector<Vector3f> &normals){
     vector<int> verticesIndex;
     bool noNormal = false;
     int startIndex = vertices.size();
@@ -182,13 +181,15 @@ vector<int> getVertexInfo(vector<RawVertex> &vertices, const vector<string> &fac
         }
     }
     for(RawVertex &vertex : faceVertices){
-        auto it = find(vertices.begin(), vertices.end(), vertex);
+        auto it = vertices.find(vertex);
         if(it == vertices.end()){
-            vertices.push_back(vertex);
-            verticesIndex.push_back(vertices.size() - 1);
+            int id = vertices.size();
+            vertex.id = id;
+            vertices.insert(vertex);
+            verticesIndex.push_back(id);
         }
         else{
-            verticesIndex.push_back(distance(vertices.begin(), it));
+            verticesIndex.push_back(it->id);
         }
     }
     return verticesIndex;
@@ -196,7 +197,6 @@ vector<int> getVertexInfo(vector<RawVertex> &vertices, const vector<string> &fac
 
 Mesh loadFile(string path){
     // If the file is not an .obj file return false
-    cerr << "entered loadFile\n";
     Mesh mesh;
     Material material;
     if(path.substr(path.size() - 4, 4) != ".obj"){
@@ -216,7 +216,7 @@ Mesh loadFile(string path){
     vector<Vector3f> positions;
     vector<Vector2f> tCoords;
     vector<Vector3f> normals;
-    vector<RawVertex> vertices;
+    set<RawVertex> vertices;
     vector<vector<int>> faces;
     string currentLine;
     while(getline(file, currentLine)){
@@ -266,12 +266,15 @@ Mesh loadFile(string path){
             material = LoadMaterial(directory, matFile);
         }
     }
-    mesh.vertices = vertices;
+    vector<RawVertex> verticesVector(vertices.size());
+    for(RawVertex rawVertex : vertices){
+        verticesVector[rawVertex.id] = rawVertex;
+    }
+    mesh.vertices = verticesVector;
     mesh.faces = faces;
     mesh.material = material;
 
     file.close();
-    cerr << "exited loadFile\n";
     return mesh;
 }
 

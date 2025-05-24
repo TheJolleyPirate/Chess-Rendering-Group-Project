@@ -6,6 +6,7 @@ struct RawVertex{
     Eigen::Vector3f position;
     Eigen::Vector3f normal;
     Eigen::Vector2f textureCoords;
+    int id;
     bool operator==(const RawVertex &other) const{
         return position == other.position && normal == other.normal && textureCoords == other.textureCoords;
     }
