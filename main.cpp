@@ -111,7 +111,7 @@ int main(){
         std::map<std::string, Object> objects = loadModels("../Models/");
         cout << "models loaded\n";
         cout << "building scene\n";
-        Scene scene = loadSceneFromJson(objects, "../Models/chess_scene.json");
+        Scene scene = Scene::loadSceneFromJson(objects, "../Models/chess_scene.json");
         cout << "scene built\n";
         cout << "rendering scene\n";
         auto start = std::chrono::system_clock::now();
