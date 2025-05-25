@@ -110,5 +110,6 @@
         "ios": "cpp",
         "locale": "cpp",
         "__bit_reference": "cpp"
-    }
+    },
+    "C_Cpp.default.compilerPath": "/usr/bin/g++-11"
 }

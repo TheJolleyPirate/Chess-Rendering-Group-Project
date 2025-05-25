@@ -19,6 +19,6 @@ public:
     void addObject(const Object& obj) { objects.push_back(obj); }
     void addLight(const Light& light) { lights.push_back(light); }
 
-};
 
-Scene loadSceneFromJson(std::map<std::string, Object> rawObjects, std::string fileJSON);
+    static Scene loadSceneFromJson(const std::map<std::string, Object>& rawObjects, const std::string& fileJSON);
+};
