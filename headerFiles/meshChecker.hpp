@@ -46,7 +46,7 @@ class SeidelRay{
                 Eigen::Vector3f origin = rotatedPos.at(halfEdge->vertex->id);
                 Eigen::Vector3f dest = rotatedPos.at(halfEdge->next->vertex->id);
                 //if yValue between origin and dest
-                if((origin.y() > yValue && yValue > dest.y()) || (origin.y() < yValue && yValue < dest.y())){
+                if((origin.y() >= yValue && yValue >= dest.y()) || (origin.y() <= yValue && yValue <= dest.y())){
                     float yOrigin = origin.y();
                     float yDest = dest.y();
                     float dy = yDest - yOrigin;
@@ -87,10 +87,9 @@ class Trapezoid{
         std::shared_ptr<HalfEdge> rseg; //right edge
         std::weak_ptr<Node> sink; //Position of trapezoid in tree structure
         bool validState; //Represents validity of trapezoid (Inside or outside)
-        const int id; //unique ID for this Trapezoid
         std::shared_ptr<SeidelRay> highRay; //the ray which bounds the top of the trapezoid
         std::shared_ptr<SeidelRay> lowRay; //the ray which bounds the bottom of the trapezoid
-        Trapezoid(std::weak_ptr<Node> weakNode, std::shared_ptr<SeidelRay> lowRay, std::shared_ptr<SeidelRay> highRay, int id): id(id){
+        Trapezoid(std::weak_ptr<Node> weakNode, std::shared_ptr<SeidelRay> lowRay, std::shared_ptr<SeidelRay> highRay){
             this->sink = weakNode.lock()->parent;
             this->highRay = highRay;
             this->lowRay = lowRay;
