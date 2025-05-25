@@ -1,72 +1,64 @@
-#include <fstream>
-#include <iostream>
-#include <memory>
-#include <Eigen/Dense>
-
 #include <scene.hpp>
 #include <json.hpp>
-#include <shader.hpp>
+#include <fstream>
+#include <Eigen/Dense>
 
-using namespace std;
-using namespace Eigen;
 using json = nlohmann::json;
+using namespace Eigen;
 
-void applyTransform(Object &object, const Affine3f &transform){
-    Matrix4f transformationMatrix = transform.matrix();
-    for(shared_ptr<Vertex> vertex : object.vertices){
-        Vector4f homoPosition;
-        homoPosition.head(3) = vertex->position;
-        homoPosition(3) = 1;
-        vertex->position = (transformationMatrix * homoPosition).head(3);
+void applyTransform(Object &object, const Affine3f &transform) {
+    Matrix4f T = transform.matrix();
+    for (auto& v : object.vertices) {
+        Vector4f hp;
+        hp.head<3>() = v->position;
+        hp[3] = 1.0f;
+        v->position = (T * hp).head<3>();
     }
 }
 
-Scene loadSceneFromJson(std::map<std::string, Object> rawObjects, std::string fileJSON){
-    Light light = Light({0, 10, 0}, {1, 1, 1});
-
-    //return Scene({rawObjects["lowPolyPawn"]}, {light});
-
-    ifstream in(fileJSON);
-    // Test if the json file can be loaded correctly
+Scene Scene::loadSceneFromJson(const std::map<std::string, Object>& rawObjects, const std::string& fileJSON) {
+    std::ifstream in(fileJSON);
     if (!in.is_open()) {
-        string message = "Failed to open scene JSON: " + fileJSON;
-        throw message;
+        throw std::runtime_error("Cannot open JSON scene file: " + fileJSON);
     }
+
     json j;
     in >> j;
-    vector<Object> sceneObjects;
+    in.close();
+
+    std::vector<Object> sceneObjects;
 
     for (const auto& objectSceneInfo : j["objects"]) {
-        string objectName = objectSceneInfo["model"];
-        if(rawObjects.count(objectName) == 0){
-            string message = "no mesh named " + objectName;
-            throw(message);
+        std::string modelName = objectSceneInfo["model"];
+        if (rawObjects.count(modelName) == 0) {
+            throw std::runtime_error("No mesh named: " + modelName);
         }
-        Object object = rawObjects[objectName];
+        Object object = rawObjects.at(modelName);
 
-        // Default transform: identity
         Affine3f transform = Affine3f::Identity();
-
         if (objectSceneInfo.contains("transform")) {
-            auto transformInfo = objectSceneInfo["transform"];
-            if (transformInfo.contains("translate")) {
-                Vector3f tr(transformInfo["translate"][0], transformInfo["translate"][1], transformInfo["translate"][2]);
-                transform.translate(tr);
+            const auto& t = objectSceneInfo["transform"][0];
+            if (t.contains("translate")) {
+                transform.translate(Vector3f(t["translate"][0], t["translate"][1], t["translate"][2]));
             }
-            if (transformInfo.contains("rotate")) {
-                float angle = transformInfo["rotate"]["angle"];
-                Vector3f axis(transformInfo["rotate"]["axis"][0], transformInfo["rotate"]["axis"][1], transformInfo["rotate"]["axis"][2]);
+            if (t.contains("rotate")) {
+                float angle = t["rotate"][0]["angle"][0];
+                Vector3f axis(t["rotate"][0]["axis"][0], t["rotate"][0]["axis"][1], t["rotate"][0]["axis"][2]);
                 transform.rotate(AngleAxisf(angle, axis.normalized()));
             }
-            if (transformInfo.contains("scale")) {
-                Vector3f s(transformInfo["scale"][0], transformInfo["scale"][1], transformInfo["scale"][2]);
-                transform.scale(s);
+            if (t.contains("scale")) {
+                transform.scale(Vector3f(t["scale"][0], t["scale"][1], t["scale"][2]));
             }
         }
+
         applyTransform(object, transform);
         sceneObjects.push_back(object);
     }
-    in.close();
 
-    return Scene(sceneObjects, {light});
+    // default light
+    std::vector<Light> lights = {
+        Light(Vector3f(0, 10, 0), Vector3f(1, 1, 1))
+    };
+
+    return Scene(sceneObjects, lights);
 }
