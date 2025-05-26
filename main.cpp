@@ -100,13 +100,6 @@ void renderScene(Scene scene){
 
 int main(){
     try{
-        std::map<std::string, Object> objects;
-        std::map<std::string, Object> objects;
-        objects["board"] = load("../Models/board/", "board.obj");
-        objects["pawn"]  = load("../Models/pawn/", "pawn.obj");
-        objects["king"]  = load("../Models/king/", "king.obj");
-
-
         cout << "loading models\n";
         std::map<std::string, Object> objects = loadModels("../Models/");
         cout << "models loaded\n";

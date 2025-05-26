@@ -528,17 +528,18 @@ namespace seidel{
 
     vector<vector<Point>> triangulateQuad(Point A, Point B, Point C, Point D){
         auto concave = [&]() ->pair<int, int>{
-            Vector3f AB = B.position - A.position;
-            Vector3f BC = C.position - B.position;
-            Vector3f CD = D.position - C.position;
-            Vector3f DA = A.position - D.position;
+            Vector3f AB = (B.position - A.position).normalized();
+            Vector3f BC = (C.position - B.position).normalized();
+            Vector3f CD = (D.position - C.position).normalized();
+            Vector3f DA = (A.position - D.position).normalized();
             //first check if convex CDA
             //check if cross product of sides is the same
+            Vector3f base = DA.cross(AB);
             vector<int> direction(4);
-            direction[0] = DA.cross(AB).z();
-            direction[1] = AB.cross(BC).z();
-            direction[2] = BC.cross(CD).z();
-            direction[3] = CD.cross(DA).z();
+            direction[0] = base.dot(DA.cross(AB));
+            direction[1] = base.dot(AB.cross(BC));
+            direction[2] = base.dot(BC.cross(CD));
+            direction[3] = base.dot(CD.cross(DA));
             int numNeg;
             for(int i = 0; i < 4; ++i){
                 if(direction[i] < 0){
@@ -557,7 +558,7 @@ namespace seidel{
             }
             else if(numNeg == 3){
                 for(int i = 0; i < 4; ++i){
-                    if(!direction[i] < 0){
+                    if(!(direction[i] < 0)){
                         return {1, i};
                     }
                 }
@@ -596,27 +597,43 @@ namespace seidel{
         else{
             //if convex along both diagnols then the quad must self intersect
             //need to find coords where AC intersects BD
-            //set A + (AC * n) = B + (BD * m)
+            //set A + (AB * n) = B + (bc * m)
             //and then solve for n and m
-            Vector3f a = A.position;
-            Vector3f b = B.position;
-            Vector3f ac = C.position - a;
-            Vector3f bd = D.position - b;
-            Vector3f ab = b - a;
-            float det = (ac.y() * (-bd.x())) - (ac.x() * (-bd.y()));
+            Vector3f ad = D.position - A.position;
+            Vector3f bc = C.position - B.position;
+            Vector3f ab = B.position - A.position;
+            Vector3f dc = C.position - B.position;
+
+            float det = (ad.x() * (-bc.y())) - (ad.y() * (-bc.x()));
             
             //using cramer's rule
-            float n = ((ab.x() * (-bd.y())) - (ab.y() * (-bd.y()))) / det;
-            float m = ((ac.x() * ab.y()) - (ac.y() * ab.x())) / det;
+            float n = ((ab.x() * (-bc.y())) - (ab.y() * (-bc.x()))) / det;
+            //if ad and bc are not parrallel and there intersection is withing the polygon then they are ones that self intersect
+            if(ad.dot(bc) < 1 + FLT_EPSILON && n > -FLT_EPSILON && n < 1 + FLT_EPSILON){
+                //finally get intersection
+                Vector3f iPosition = A.position + (ad * n);
+                Vector3f iColour = (A.colour * (1 - n)) + (C.colour * n);
+                Vector2f iTextureCoords = (A.textureCoords * (1 - n)) + (C.textureCoords * n);
+                Vector3f iNormal = (A.normal * (1 - n)) + (C.normal * n);
+                Point I = Point(iPosition, iColour, iTextureCoords, iNormal);
 
-            //finally get intersection
-            Vector3f iPosition = a + (ac * n);
-            Vector3f iColour = (A.colour * (1 - n)) + (C.colour * n);
-            Vector2f iTextureCoords = (A.textureCoords * (1 - n)) + (C.textureCoords * n);
-            Vector3f iNormal = (A.normal * (1 - n)) + (C.normal * n);
-            Point I = Point(iPosition, iColour, iTextureCoords, iNormal);
+                return{{A, B, I}, {C, D, I}};
+            }
+            //else the intersection must be on AB, DC
+            else{
+                float det = (ab.y() * (-dc.x())) - (ab.x() * (-dc.y()));
+                
+                //using cramer's rule
+                float n = ((ad.x() * (-dc.y())) - (ad.y() * (-dc.y()))) / det;
 
-            return{{A, B, I}, {C, D, I}};
+                Vector3f iPosition = A.position + (ab * n);
+                Vector3f iColour = (A.colour * (1 - n)) + (C.colour * n);
+                Vector2f iTextureCoords = (A.textureCoords * (1 - n)) + (C.textureCoords * n);
+                Vector3f iNormal = (A.normal * (1 - n)) + (C.normal * n);
+                Point I = Point(iPosition, iColour, iTextureCoords, iNormal);
+
+                return{{D, A, I}, {B, C, I}};
+            }
         }
     }    
 
