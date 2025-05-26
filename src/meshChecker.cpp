@@ -1398,7 +1398,6 @@ namespace seidel{
         }
         //if it is a quad use basic quad triangulation
         else if (numEdges == 4){
-            //for left and right edges all that matters is that they are opposite edges actual orientation doesn't matter
             Point A = Point(current->vertex);
             Point B = Point(current->next->vertex);
             Point C = Point(current->next->next->vertex);
