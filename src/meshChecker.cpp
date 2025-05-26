@@ -1179,7 +1179,7 @@ namespace seidel{
             do{
                 if(visited.count(adjacentHalfEdge->id) == 0){
                     adjacentVector = adjacentHalfEdge->next->vertex->position - adjacentHalfEdge->vertex->position;
-                    normal = currentVector.cross(adjacentVector).normalized();
+                    normal = adjacentVector.cross(currentVector).normalized();
                     if(normal.squaredNorm() > FLT_EPSILON * FLT_EPSILON){
                         faceLine = false;
                         break;
@@ -1396,7 +1396,7 @@ namespace seidel{
             Point C = Point(current->next->next->vertex);
             triangles.push_back({A, B, C});
         }
-        //if it is a quad and has no self intersections use basic quad triangulation
+        //if it is a quad use basic quad triangulation
         else if (numEdges == 4){
             //for left and right edges all that matters is that they are opposite edges actual orientation doesn't matter
             Point A = Point(current->vertex);
