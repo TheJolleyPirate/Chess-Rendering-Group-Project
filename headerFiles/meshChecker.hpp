@@ -135,15 +135,6 @@ class Trapezoid{
             if(!lseg || !rseg || !highRay || !lowRay){
                 return false;
             }
-            /*the rest of this code only applies if their might be holes in our polygon
-            since we are currently using .obj files and obj files can not define polygons 
-            with holes due to the way the faces are constructed we can skip the rest of 
-            this function and return true if the polygon has 
-            a high ray, low ray, left segment and right segment*/
-            else{
-                validState = true;
-                return true;
-            }
             
             //get current node from trapezoid
             std::shared_ptr<Node> currentNode = sink.lock();
