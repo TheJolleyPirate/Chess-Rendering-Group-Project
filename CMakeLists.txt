@@ -6,6 +6,7 @@ set(CMAKE_CXX_STANDARD 17)
 
 find_package(OpenCV REQUIRED)
 find_package(Eigen3 REQUIRED)
+find_package(OpenMP)
 
 include_directories(
     ${OpenCV_INCLUDE_DIRS} 
@@ -22,10 +23,13 @@ add_library(supplemental SHARED
     src/rasterizer.cpp
     src/scene.cpp
     src/shader.cpp
+    src/bvh.cpp
+    src/camera.cpp
+    src/pathtracer.cpp
 )
 
 add_executable(chessRenderer main.cpp)
-target_link_libraries(chessRenderer ${OpenCV_LIBRARIES} supplemental)
+target_link_libraries(chessRenderer ${OpenCV_LIBRARIES} supplemental OpenMP::OpenMP_CXX)
 
 #add more executables as required for testing:
 #example:

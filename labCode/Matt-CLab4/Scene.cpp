@@ -8,7 +8,7 @@ const float EPSILON = 1e-2f;
 
 void Scene::buildBVH() {
     printf(" - Generating BVH...\n\n");
-    this->bvh = new BVHAccel(objects, 1, BVHAccel::SplitMethod::NAIVE);
+    this->bvh = new BVHAccel(objects, 1, BVHAccel::SplitMethod::SAH);
 }
 
 Intersection Scene::intersect(const Ray &ray) const
@@ -114,7 +114,7 @@ Vector3f Scene::glassShader(const Intersection &inter, const Vector3f &I, int de
     return result_colour;
 }
 
-// Implementation of Path Tracing
+// Implementation of Basic Ray Tracing
 Vector3f Scene::castRay(const Ray &ray, int depth) const
 {
     Vector3f hitColor = Vector3f(0);
@@ -159,7 +159,7 @@ Vector3f Scene::castRay(const Ray &ray, int depth) const
 
         // Task 1.3: Basic Shading
         Vector3f viewDir = -ray.direction;
-        hitColor += phongShader(inter, viewDir);
+        // hitColor += phongShader(inter, viewDir);
     } 
     
     else if (inter.material->m_type == GLASS && TASK_N>=3) {
@@ -169,4 +169,66 @@ Vector3f Scene::castRay(const Ray &ray, int depth) const
     }
 
     return hitColor;
+}
+
+Vector3f Scene::traceRay(const Ray &ray, int depth) const {
+    if (depth > 10) return Vector3f(0); // Max recursion depth
+    Vector3f Lo = Vector3f(0);
+
+    // Get the intersection
+    auto inter = intersect(ray);
+
+    // If no intersection, return background color
+    if (!inter.happened)
+        return backgroundColor;
+
+    // Only add emission if first bounce hits light source to avoid double counting
+    if (inter.material->m_type == EMIT) {
+        if (depth == 0)
+            return inter.material->m_emission;
+        else 
+            return Vector3f(0);// inter.material->m_color / depth;
+    }
+
+    // Direct illumination
+    Vector3f Ld = Vector3f(0);
+    Intersection lightInter;
+    float pdf_light = 0.0f;
+    sampleLight(lightInter, pdf_light);
+
+    Vector3f lightDir = (lightInter.coords - inter.coords).normalized();
+    float lightDistance = (lightInter.coords - inter.coords).norm();
+    Vector3f lightEmit = lightInter.material->m_emission;
+
+    Ray shadowRay(inter.coords + lightDir * EPSILON, lightDir);
+    Intersection shadowInter = intersect(shadowRay);
+    bool inShadow = shadowInter.happened && (shadowInter.coords - inter.coords).norm() < lightDistance;
+    Vector3f albedo = inter.obj->evalDiffuseColor(inter.tcoords);
+
+    if (!inShadow) {
+        float cosSurface = std::max(0.0f, dotProduct(inter.normal, lightDir));
+        float cosLight = std::max(0.0f, dotProduct(-lightDir, lightInter.normal)); 
+        Vector3f brdfDirect = inter.material->eval(lightDir, inter.normal);
+        float pdf_surface = inter.material->pdf(ray.direction, lightDir, inter.normal);
+        float weight_light = pdf_light / (pdf_light + pdf_surface); // TODO: multiple importance sampling
+        Ld = lightEmit * albedo * brdfDirect * cosSurface * cosLight / (lightDistance * lightDistance * pdf_light);
+    }
+
+    // Indirect illumination
+    float prr = std::min(0.99f, std::max(albedo.x, std::max(albedo.y, albedo.z)));
+    if (get_random_float() > prr) 
+        return Ld;
+    Vector3f Li = Vector3f(0);
+    Vector3f wo = -ray.direction;
+    Vector3f wi = inter.material->sample(wo, inter.normal);
+    float pdf = inter.material->pdf(ray.direction, wi, inter.normal);
+    float cosIn = std::max(0.0f, dotProduct(inter.normal, wi));
+    Vector3f brdfIndirect = inter.material->eval(wi, inter.normal);
+
+
+    Ray newRay(inter.coords + wi * EPSILON, wi);
+    Li = traceRay(newRay, depth + 1) * albedo * brdfIndirect * cosIn / pdf;
+    
+    Lo = (Li / prr) + Ld;
+    return Lo / 2;
 }

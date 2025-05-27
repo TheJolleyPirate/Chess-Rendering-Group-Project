@@ -7,7 +7,7 @@
 
 #include "Vector.hpp"
 
-enum MaterialType { DIFFUSE, GLASS, EMIT};
+enum MaterialType { DIFFUSE, LAMBERTIAN, GLASS, EMIT};
 
 class Material{
 private:
@@ -146,10 +146,23 @@ Vector3f Material::sample(const Vector3f &wi, const Vector3f &N){
             float r = std::sqrt(1.0f - z * z), phi = 2 * M_PI * x_2;
             Vector3f localRay(r*std::cos(phi), r*std::sin(phi), z);
             return toWorld(localRay, N);
-            
+            break;
+        }
+        case LAMBERTIAN:
+        {
+            // Cosine-weighted hemisphere sampling
+            float r1 = get_random_float();
+            float r2 = get_random_float();
+            float phi = 2 * M_PI * r1;
+            float x = cos(phi) * std::sqrt(r2);
+            float y = sin(phi) * std::sqrt(r2);
+            float z = sqrt(1 - r2);
+            Vector3f localRay(x,y, z);
+            return toWorld(localRay, N);
             break;
         }
     }
+    return Vector3f(0);
 }
 
 float Material::pdf(const Vector3f &wi, const Vector3f &wo, const Vector3f &N){
@@ -163,12 +176,19 @@ float Material::pdf(const Vector3f &wi, const Vector3f &wo, const Vector3f &N){
                 return 0.0f;
             break;
         }
+        case LAMBERTIAN:
+        {
+            float cosTheta = std::max(0.0f, dotProduct(wo, N));
+            return cosTheta / M_PI;
+            break;
+        }
     }
+    return 0.0f;
 }
 
 Vector3f Material::eval(const Vector3f &dir, const Vector3f &N){
     switch(m_type){
-        default:
+        case DIFFUSE:
         {
             // calculate the contribution of diffuse   model
             float cosalpha = dotProduct(N, dir);
@@ -180,7 +200,17 @@ Vector3f Material::eval(const Vector3f &dir, const Vector3f &N){
                 return Vector3f(0.0f);
             break;
         }
+        case LAMBERTIAN:
+        {
+            float cosAlpha = dotProduct(N, dir);
+            if (cosAlpha > 0.0f)
+                return 1 / M_PI;
+            else
+                return Vector3f(0);
+            break;
+        }
     }
+    return Vector3f(0);
 }
 
 #endif //RAYTRACING_MATERIAL_H

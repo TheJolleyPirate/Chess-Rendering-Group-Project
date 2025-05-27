@@ -11,6 +11,7 @@
 #include <rasterizer.hpp>
 #include <camera.hpp>
 #include <shader.hpp>
+#include "pathtracer.hpp"
 
 #include <loadModel.cpp>
 #include <shader.cpp>
@@ -100,30 +101,58 @@ void renderScene(Scene scene){
 
 }
 
-int main(){
-    try{
-        cout << "loading models\n";
-        std::map<std::string, Object> objects = loadModels("../Models/");
-        cout << "models loaded\n";
-        cout << "building scene\n";
-        Scene scene = loadSceneFromJson(objects, "../Models/chess_scene.json");
-        cout << "scene built\n";
-        cout << "rendering scene\n";
-        auto start = std::chrono::system_clock::now();
-        renderScene(scene);
-        auto stop = std::chrono::system_clock::now();
-        cout << "scene rendered\n";
-        auto time = stop - start;
-        auto hours = std::chrono::duration_cast<std::chrono::hours>(time);
-        time = time - hours;
-        auto minutes = std::chrono::duration_cast<std::chrono::minutes>(time);
-        time = time - minutes;
-        auto seconds = std::chrono::duration_cast<std::chrono::seconds>(time).count();
-        cout << "render time: " << hours.count() << ":" << minutes.count() << ":" << seconds << "\n";
-    }
-    catch(string message){
-        cerr << "exception occurred, message: " << message << "\n";
-    }
-    
+int RENDER_METHOD = 1; // 0 for rasterization, 1 for ray tracing
+
+int main() {
+    if (RENDER_METHOD == 0) {
+        try{
+            cout << "loading models\n";
+            std::map<std::string, Object> objects = loadModels("../Models/");
+            cout << "models loaded\n";
+            cout << "building scene\n";
+            Scene scene = loadSceneFromJson(objects, "../Models/chess_scene.json");
+            cout << "scene built\n";
+            cout << "rendering scene\n";
+            auto start = std::chrono::system_clock::now();
+            renderScene(scene);
+            auto stop = std::chrono::system_clock::now();
+            cout << "scene rendered\n";
+            auto time = stop - start;
+            auto hours = std::chrono::duration_cast<std::chrono::hours>(time);
+            time = time - hours;
+            auto minutes = std::chrono::duration_cast<std::chrono::minutes>(time);
+            time = time - minutes;
+            auto seconds = std::chrono::duration_cast<std::chrono::seconds>(time).count();
+            cout << "render time: " << hours.count() << ":" << minutes.count() << ":" << seconds << "\n";
+        }
+        catch(string message){
+            cerr << "exception occurred, message: " << message << "\n";
+        }    
     return 0;
+    } else {
+        try {
+            std::cout << "Path Tracer" << std::endl;
+            std::cout << "Loading models..." << std::endl;
+            auto objects = loadModels("../Models/");
+            std::cout << "Building scene..." << std::endl;
+            Scene scene = loadSceneFromJson(objects, "../Models/chess_scene.json");
+            std::cout << "Initialising camera..." << std::endl;
+            Camera cam({0, 10, -10}, {0, 0, 0}, {0, 1, 0}, 45.0f, 1.0f, 0.1f, 100.0f);
+
+            int width = 512, height = 512, spp = 1;
+            PathTracer PathTracer(width, height, spp);
+
+            std::cout << "Rendering scene..." << std::endl;
+            auto start = std::chrono::high_resolution_clock::now();
+            PathTracer.render(scene, cam, "output");
+            auto stop = std::chrono::high_resolution_clock::now();
+
+            double seconds = std::chrono::duration_cast<std::chrono::seconds>(stop - start).count();
+            std::cout << "Render completed in " << seconds << "s!" << std::endl;
+        } catch (const std::string &message) {
+                std::cerr << "Error: " << message << std::endl;
+                return 1;
+        }
+    return 0;
+    }
 }

@@ -1,6 +1,8 @@
-#pragma once
+#ifndef CAMERA_HPP
+#define CAMERA_HPP
 
 #include <Eigen/Dense>
+#include "ray.hpp"
 
 // This class represents a camera in 3D space, with position, target, up vector, field of view (FOV), aspect ratio, and near/far planes.
 class Camera {
@@ -16,9 +18,13 @@ public:
     Camera(Eigen::Vector3f _position, Eigen::Vector3f _target, Eigen::Vector3f _up, float _fov, float _aspectRatio, float _nearPlane, float _farPlane)
         : position(_position), target(_target), up(_up), fov(_fov), aspectRatio(_aspectRatio), nearPlane(_nearPlane), farPlane(_farPlane) {}
 
+    Camera(Eigen::Vector3f &_position, Eigen::Vector3f &_target, Eigen::Vector3f &_up, float _fov, float _aspectRatio);
+
+    Ray getRay(float u, float v) const;
+
     Eigen::Matrix4f lookAt() const {
-        Eigen::Matrix4f view = Matrix4f::Identity();
-        
+        Eigen::Matrix4f view = Eigen::Matrix4f::Identity();
+
         Eigen::Vector3f z = (position - target).normalized();
         Eigen::Vector3f x = up.cross(z).normalized();
         Eigen::Vector3f y = z.cross(x);
@@ -62,4 +68,12 @@ public:
     
         return projection;
     }
+
+private:
+    Eigen::Vector3f origin_;
+    Eigen::Vector3f lower_left_;
+    Eigen::Vector3f horizontal_;
+    Eigen::Vector3f vertical_;
 };
+
+#endif // CAMERA_HPP

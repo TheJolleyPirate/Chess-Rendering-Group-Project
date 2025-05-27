@@ -220,6 +220,8 @@ Material LoadMaterial(string path, string fileName){
             iss >> map;
             map = path + map; 
             material.diffuseTextureFile = map;
+            Texture diffuseTexture(map);
+            material.diffuseTexture = diffuseTexture;
         }
         // Specular Texture Map
         if (prefix == "map_Ks"){

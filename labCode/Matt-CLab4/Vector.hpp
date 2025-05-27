@@ -100,4 +100,6 @@ inline Vector3f power(const Vector3f &a, float exp)
     );
 }
 
+using Colour = Vector3f;
+
 #endif //RAYTRACING_VECTOR_H

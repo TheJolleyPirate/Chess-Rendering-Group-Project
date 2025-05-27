@@ -58,7 +58,7 @@ public:
 class MeshTriangle : public Object
 {
 public:
-    MeshTriangle(const Vector3f* verts, const uint32_t* vertsIndex, const uint32_t& numTris, const Vector2f* st, Material *mt = new Material())
+    MeshTriangle(const Vector3f* verts, const uint32_t* vertsIndex, const uint32_t& numTris, const Vector2f* st, Material *mt)
     {
         uint32_t maxIndex = 0;
         for (uint32_t i = 0; i < numTris * 3; ++i)
@@ -113,7 +113,7 @@ public:
         bvh = new BVHAccel(ptrs);
     }
 
-    MeshTriangle(const std::string& filename, Vector3f offset, Material *mt = new Material())
+    MeshTriangle(const std::string& filename, Vector3f offset, Material *mt)
     {
         objl::Loader loader;
         loader.LoadFile(filename);

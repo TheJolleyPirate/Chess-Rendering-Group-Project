@@ -11,15 +11,17 @@ private:
 public:
     Texture(const std::string& name)
     {
-        image_data = cv::imread(name);
-        cv::cvtColor(image_data, image_data, cv::COLOR_RGB2BGR);
-        width = image_data.cols;
-        height = image_data.rows;
+        if (name != "") {
+            image_data = cv::imread(name);
+            cv::cvtColor(image_data, image_data, cv::COLOR_RGB2BGR);
+            width = image_data.cols;
+            height = image_data.rows;
+        }
     }
 
     int width, height;
 
-    Eigen::Vector3f getColor(float u, float v)
+    Eigen::Vector3f getColor(float u, float v) const
     {
         auto u_img = u * width;
         auto v_img = (1 - v) * height;

@@ -19,23 +19,24 @@ int main(int argc, char** argv)
         TASK_N=(int)atoi(argv[1]);
     // change the resolution for quick debugging if rendering is slow
     // Scene scene(64, 64);
-    Scene scene(256, 256); // use this resolution for final rendering
+    // Scene scene(256, 256); // use this resolution for final rendering
     // Scene scene(512, 512);
     // Scene scene(1024, 1024);
+    Scene scene(720, 512);
 
     if(TASK_N>=4)
-        scene.spp = 32; // number of samples per pixel
+        scene.spp = 16; // number of samples per pixel
     else
         scene.spp = 1;
 
     // Materials
-    Material* pink = new Material(DIFFUSE, Vector3f(0.72f, 0.48f, 0.56f));
-    Material* blue = new Material(DIFFUSE, Vector3f(0.2f, 0.6f, 0.86f));
-    Material* green = new Material(DIFFUSE, Vector3f(0.5f, 0.7f, 0.13f));
-    Material* red = new Material(DIFFUSE, Vector3f(1.0f, 0.0f, 0.0f));
-    Material* purple = new Material(DIFFUSE, Vector3f(0.21f, 0.04f, 0.32f));
-    Material* yellow = new Material(DIFFUSE, Vector3f(0.70f, 0.35f, 0.0f));
-    Material* grey = new Material(DIFFUSE, Vector3f(0.48f, 0.45f, 0.4f));
+    Material* pink = new Material(LAMBERTIAN, Vector3f(0.72f, 0.48f, 0.56f));
+    Material* blue = new Material(LAMBERTIAN, Vector3f(0.2f, 0.6f, 0.86f));
+    Material* green = new Material(LAMBERTIAN, Vector3f(0.5f, 0.7f, 0.13f));
+    Material* red = new Material(LAMBERTIAN, Vector3f(1.0f, 0.0f, 0.0f));
+    Material* purple = new Material(LAMBERTIAN, Vector3f(0.21f, 0.04f, 0.32f));
+    Material* yellow = new Material(LAMBERTIAN, Vector3f(0.70f, 0.35f, 0.0f));
+    Material* grey = new Material(LAMBERTIAN, Vector3f(0.48f, 0.45f, 0.4f));
     Material* glass = new Material(GLASS, Vector3f(0));
     Material* light = new Material(EMIT, Vector3f(1));
     light->m_emission=100;
@@ -44,38 +45,78 @@ int main(int argc, char** argv)
     MeshTriangle back_and_roof("../models/cornellbox/floor.obj", Vector3f(0), grey);
     MeshTriangle left("../models/cornellbox/left.obj", Vector3f(0), pink);
     MeshTriangle right("../models/cornellbox/right.obj",Vector3f(0),  blue);
-    MeshTriangle light_("../models/cornellbox/light.obj",Vector3f(0,-5,0), light);
+    MeshTriangle light_("../models/cornellbox/light.obj",Vector3f(0,-1,0), light);
 
-    scene.Add(&back_and_roof);
-    scene.Add(&left);
-    scene.Add(&right);
-    scene.Add(&light_);
+    MeshTriangle board("../models/board.obj", Vector3f(0, 0, -10), green);
+    scene.Add(&board);
+
+    MeshTriangle king("../models/king.obj", Vector3f(-2, 30, -10), purple);
+    scene.Add(&king);
+
+    for (int i = 0; i < 6; i++) {
+        MeshTriangle *leftPawn = new MeshTriangle("../models/pawn.obj", Vector3f(-6, -6 * i, -10), red);
+        MeshTriangle *rightPawn = new MeshTriangle("../models/pawn.obj", Vector3f(-25, -6 * i, -10), blue);
+        scene.Add(leftPawn);
+        scene.Add(rightPawn);
+    }
+
+    // MeshTriangle pawn1("../models/pawn.obj", Vector3f(-2, 0, -10), red);
+    // scene.Add(&pawn1);
+
+    // MeshTriangle pawn2("../models/pawn.obj", Vector3f(-2, -6, -10), red);
+    // scene.Add(&pawn2);
+
+    // MeshTriangle pawn3("../models/pawn.obj", Vector3f(-2, -12, -10), red);
+    // scene.Add(&pawn3);
+
+    // MeshTriangle pawn4("../models/pawn.obj", Vector3f(-2, -18, -10), red);
+    // scene.Add(&pawn4);
+
+    // MeshTriangle pawn5("../models/pawn.obj", Vector3f(-2, -24, -10), red);
+    // scene.Add(&pawn5);
+
+    // MeshTriangle pawn6("../models/pawn.obj", Vector3f(-2, -30, -10), red);
+    // scene.Add(&pawn6);
+
+    MeshTriangle wall("../models/wall.obj", Vector3f(0), grey);
+    scene.Add(&wall);
+
+    MeshTriangle newlight("../models/light.obj", Vector3f(0), light);
+    scene.Add(&newlight);
+
+    // scene.Add(&back_and_roof);
+    // scene.Add(&left);
+    // scene.Add(&right);
+    // scene.Add(&light_);
 
     // Floor
     Vector3f verts[4] = {{0,0,0}, {552.8,0,0}, {549.6, 0,559.2}, {0,0,559.2}};
     Vector2f st[4] = {{0, 0}, {1, 0}, {1, 1}, {0, 1}};
     uint32_t vertIndex[6] = {0, 2, 1, 2,0,3};
-    Material* mfloor=new Material(DIFFUSE, Vector3f(0));
+    Material* mfloor=new Material(LAMBERTIAN, Vector3f(0));
     mfloor->textured=true;
-    scene.Add(new MeshTriangle(verts, vertIndex, 2,st,mfloor));
+    // scene.Add(new MeshTriangle(verts, vertIndex, 2,st,mfloor));
 
     // Sphere
-    scene.Add(new Sphere(Vector3f(450,50,90), 50, glass));
+    // scene.Add(new Sphere(Vector3f(450,50,90), 50, blue));
 
     // Cube
     MeshTriangle cube("../models/cornellbox/shortbox.obj", Vector3f(0), green);
-    scene.Add(&cube);
+    // scene.Add(&cube);
 
     // Cylinder
-    scene.Add(new Cylinder(Vector3f(370, 0, 350), Vector3f(0, 1, 0), 70, 200, purple));
+    // scene.Add(new Cylinder(Vector3f(370, 0, 350), Vector3f(0, 1, 0), 70, 200, purple));
 
     // Duck
     MeshTriangle duck("../models/bob-the-duck/bob.obj", Vector3f(0), red);
-    scene.Add(&duck);
+    // scene.Add(&duck);
 
     // Bunny
     // MeshTriangle bunny("../models/bunny/bunny.obj", Vector3f(0), glass);
     // scene.Add(&bunny);
+
+    // Surounding sphere
+    // scene.Add(new Sphere(Vector3f(0,0,0), 10000, grey));
 
     // Point light
     scene.Add(std::make_unique<PointLight>(Vector3f(-2000, 4000, -3000), 0.5));

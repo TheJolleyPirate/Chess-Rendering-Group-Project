@@ -24,8 +24,9 @@ void Renderer::Render(const Scene& scene)
     std::vector<Vector3f> framebuffer(scene.width * scene.height);
 
     float scale = tan(deg2rad(scene.fov * 0.5));
-    float imageAspectRatio = scene.width / (float)scene.height;
-    Vector3f eye_pos(278, 273, -800);
+    // float imageAspectRatio = scene.width / (float)scene.height;
+    float imageAspectRatio = scene.height / (float)scene.width;
+    Vector3f eye_pos(0, -30, -2);
 
     std::cout << "SPP: " << scene.spp << "\n";
 
@@ -56,14 +57,19 @@ void Renderer::Render(const Scene& scene)
                     float y_jitter = get_random_float();
 
                     // Compute the Normalized Device Coordinates (NDC) of the pixel with jittering
-                    float x = -(2 * (i + x_jitter) / (float)scene.width - 1) * imageAspectRatio * scale;
-                    float y = (1 - 2 * (j + y_jitter) / (float)scene.height) * scale;
+                    float x = -(2 * (i + x_jitter) / (float)scene.width - 1) * scale;
+                    float y = (1 - 2 * (j + y_jitter) / (float)scene.height) * imageAspectRatio * scale;
 
                     // Compute the ray direction in world coordinates
-                    Vector3f dir = normalize(Vector3f(x, y, 1));
+                    Vector3f dir = normalize(Vector3f(x, 1, y));
 
                     // Cast the ray into the scene and accumulate the color
-                    result_colour += scene.castRay(Ray(eye_pos, dir), 0);
+                    if (TASK_N >= 6) {
+                        result_colour += scene.traceRay(Ray(eye_pos, dir), 0);
+                        // result_colour += scene.castRay(Ray(eye_pos, dir), 0);
+                    }
+                    else
+                        result_colour += scene.castRay(Ray(eye_pos, dir), 0);
                 }
                 // Average the color over the number of samples
                 result_colour = result_colour / scene.spp;

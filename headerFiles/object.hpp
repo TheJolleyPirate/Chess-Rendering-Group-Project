@@ -4,6 +4,8 @@
 #include <vector>
 #include <iostream>
 #include <Eigen/Dense>
+#include "texture.hpp"
+
 class Object;
 class Material;
 class Face;
@@ -106,6 +108,7 @@ class Material{
     public:
         Eigen::Vector3f colour;
         std::string diffuseTextureFile;
+        Texture diffuseTexture = Texture(""); //default empty texture;
         //below are optional
         std::string specularTextureFile;
         std::string ambiantTextureFile;
