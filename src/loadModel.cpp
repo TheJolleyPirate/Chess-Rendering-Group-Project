@@ -5,147 +5,24 @@
 #include <map>
 #include "Eigen/Dense"
 #include <fstream>
+#include <set>
 
-#include "meshChecker.hpp"
-#include "object.hpp"
+#include <meshChecker.hpp>
+#include <object.hpp>
+#include <loadModel.hpp>
 
 using namespace std;
 using namespace Eigen;
 
-struct RawVertex{
-    Vector3f position;
-    Vector3f normal;
-    Vector2f textureCoords;
-};
-
-struct Mesh{
-    vector<RawVertex> vertices;
-    vector<vector<int>> faces;
-    Material material;
-};
-
-vector<string> split (const string &s, const char delim){
+vector<string> split(const string &s, const char delim){
     vector<string> result;
     stringstream ss (s);
     string item;
 
-    while (getline (ss, item, delim)) {
+    while(getline (ss, item, delim)) {
         result.push_back (item);
     }
     return result;
-}
-
-template <class T>
-inline const T & getElement(const vector<T> &elements, string &stringIndex){
-    int index = stoi(stringIndex);
-    if (index < 0){
-        index = int(elements.size()) + index;
-    }
-    else{
-        index -= 1;
-    }
-    return elements[index];
-}
-
-float angleBetweenV3(const Vector3f a, const Vector3f b)        {
-    float angle = a.dot(b);
-    angle /= (a.norm() * b.norm());
-    return angle = acosf(angle);
-}
-
-bool SameSide(Vector3f p1, Vector3f p2, Vector3f a, Vector3f b){
-    Vector3f cp1 = (b - a).cross((p1 - a));
-    Vector3f cp2 = (b - a).cross((p2 - a));
-
-    if (cp1.dot(cp2) >= 0)
-        return true;
-    else
-        return false;
-}
-
-bool inTriangle(Vector3f point, Vector3f tri1, Vector3f tri2, Vector3f tri3){
-    // Test to see if it is within an infinite prism that the triangle outlines.
-    bool within_tri_prisim = SameSide(point, tri1, tri2, tri3) && SameSide(point, tri2, tri1, tri3)
-                                && SameSide(point, tri3, tri1, tri2);
-
-    // If it isn't it will never be on the triangle
-    if (!within_tri_prisim)
-        return false;
-
-    // Calulate Triangle's Normal
-    Vector3f u = tri2 - tri1;
-    Vector3f v = tri3 - tri1;
-    Vector3f normal = u.cross(v);
-
-    // Project the point onto this normal
-    Vector3f bn = normal.normalized();
-    Vector3f proj = bn * point.dot(bn);;
-
-    // If the distance from the triangle to the point is 0
-    //	it lies on the triangle
-    if (proj.norm() == 0)
-        return true;
-    else
-        return false;
-}
-
-tuple <vector<RawVertex>, vector<int>> getVertexInfo(vector<string> face, const vector<Vector3f> &positions, const vector<Vector2f> &tCoords, const vector<Vector3f> &normals){
-    vector<RawVertex> vertices;
-    vector<int> verticesIndex;
-    bool noNormal = false;
-    for(string stringVertex : face){
-        RawVertex vertex;
-        int positionIndex;
-        int vertexType;
-        char delim = '/';
-        vector<string> parts = split(stringVertex, delim);
-        // Check for just position - v1
-        if (parts.size() == 1){
-            vertex.position = getElement(positions, parts[0]);
-            vertex.textureCoords = Vector2f(0, 0);
-            noNormal = true;
-            vertices.push_back(vertex);
-            verticesIndex.push_back(stoi(parts[0]));
-        }
-        // Check for position & texture - v1/vt1
-        else if (parts.size() == 2){
-            vertex.position = getElement(positions, parts[0]);
-            vertex.textureCoords = getElement(tCoords, parts[1]);
-            noNormal = true;
-            vertices.push_back(vertex);
-            verticesIndex.push_back(stoi(parts[0]));
-        }
-        // Check for Position, Texture and Normal - v1/vt1/vn1
-        // or if Position and Normal - v1//vn1
-        else if (parts.size() == 3){
-            if (parts[1] != "")
-            {
-                vertex.position = getElement(positions, parts[0]);
-                vertex.textureCoords = getElement(tCoords, parts[1]);
-                vertex.normal = getElement(normals, parts[2]);
-                vertices.push_back(vertex);
-                verticesIndex.push_back(stoi(parts[0]));
-            }
-            else
-            {
-                vertex.position = getElement(positions, parts[0]);
-                vertex.textureCoords = Vector2f(0, 0);
-                vertex.normal = getElement(normals, parts[2]);
-                vertices.push_back(vertex);
-                verticesIndex.push_back(stoi(parts[0]));
-            }
-        }
-    }
-    if (noNormal){
-        Vector3f a = vertices[0].position - vertices[1].position;
-        Vector3f b = vertices[2].position - vertices[1].position;
-        Vector3f normal = a.cross(b);
-
-        for (int i = 0; i < vertices.size(); i++){
-            vertices[i].normal = normal;
-        }
-    }
-    return make_tuple(vertices, verticesIndex);
 }
 
 Material LoadMaterial(string path, string fileName){
@@ -160,6 +37,7 @@ Material LoadMaterial(string path, string fileName){
     }
 
     Material material;
+    material.mtlFile = fileName;
     // Go through each line looking for material variables
     string currentLine;
     while (getline(file, currentLine)){
@@ -256,9 +134,71 @@ Material LoadMaterial(string path, string fileName){
     return material;
 }
 
+vector<int> getVertexInfo(set<RawVertex> &vertices, const vector<string> &face, const vector<Vector3f> &positions, const vector<Vector2f> &tCoords, const vector<Vector3f> &normals){
+    vector<int> verticesIndex;
+    bool noNormal = false;
+    int startIndex = vertices.size();
+    vector<RawVertex> faceVertices;
+    for(string stringVertex : face){
+        RawVertex vertex;
+        int positionIndex;
+        int vertexType;
+        char delim = '/';
+        vector<string> parts = split(stringVertex, delim);
+        // Check for just position - v1
+        if (parts.size() == 1){
+            vertex.position = positions[stoi(parts[0]) - 1];
+            vertex.textureCoords = Vector2f(0, 0);
+            noNormal = true;
+        }
+        // Check for position & texture - v1/vt1
+        else if (parts.size() == 2){
+            vertex.position = positions[stoi(parts[0]) - 1];
+            vertex.textureCoords = tCoords[stoi(parts[1]) - 1];
+            noNormal = true;
+        }
+        // Check for Position, Texture and Normal - v1/vt1/vn1
+        // or if Position and Normal - v1//vn1
+        else if (parts.size() == 3){
+            if (parts[1] != ""){
+                vertex.position = positions[stoi(parts[0]) - 1];
+                vertex.textureCoords = tCoords[stoi(parts[1]) - 1];
+                vertex.normal = normals[stoi(parts[2])];
+            }
+            else{
+                vertex.position = positions[stoi(parts[0]) - 1];
+                vertex.textureCoords = Vector2f(0, 0);
+                vertex.normal = normals[stoi(parts[2])];
+            }
+        }
+        faceVertices.push_back(vertex);
+    }
+    if (noNormal){
+        Vector3f a = faceVertices[1].position - faceVertices[0].position;
+        Vector3f b = faceVertices[2].position - faceVertices[0].position;
+        Vector3f normal = a.cross(b);
+
+        for (RawVertex &vertex : faceVertices){
+            vertex.normal = normal;
+        }
+    }
+    for(RawVertex &vertex : faceVertices){
+        auto it = vertices.find(vertex);
+        if(it == vertices.end()){
+            int id = vertices.size();
+            vertex.id = id;
+            vertices.insert(vertex);
+            verticesIndex.push_back(id);
+        }
+        else{
+            verticesIndex.push_back(it->id);
+        }
+    }
+    return verticesIndex;
+}
+
 Mesh loadFile(string path){
     // If the file is not an .obj file return false
-    cerr << "entered loadFile\n";
     Mesh mesh;
     Material material;
     if(path.substr(path.size() - 4, 4) != ".obj"){
@@ -278,10 +218,9 @@ Mesh loadFile(string path){
     vector<Vector3f> positions;
     vector<Vector2f> tCoords;
     vector<Vector3f> normals;
-    vector<RawVertex> vertices;
+    set<RawVertex> vertices;
     vector<vector<int>> faces;
     string currentLine;
-    int lineNum = 0;
     while(getline(file, currentLine)){
         istringstream iss(currentLine);
         string prefix;
@@ -312,13 +251,8 @@ Mesh loadFile(string path){
             for(string vertData; iss >> vertData;){
                 stringFace.push_back(vertData);
             }
-            auto [rawVertices, face] = getVertexInfo(stringFace, positions, tCoords, normals);
-
-            // Add Vertices
-            for(int i = 0; i < int(rawVertices.size()); i++){
-                vertices.push_back(rawVertices[i]);
-            }
-            //add face
+            //update vertices and get face info
+            vector<int> face = getVertexInfo(vertices, stringFace, positions, tCoords, normals);
             faces.push_back(face);
         }
         else if(prefix == "usemtl"){
@@ -334,7 +268,11 @@ Mesh loadFile(string path){
             material = LoadMaterial(directory, matFile);
         }
     }
-    mesh.vertices = vertices;
+    vector<RawVertex> verticesVector(vertices.size());
+    for(RawVertex rawVertex : vertices){
+        verticesVector[rawVertex.id] = rawVertex;
+    }
+    mesh.vertices = verticesVector;
     mesh.faces = faces;
     mesh.material = material;
 
@@ -370,7 +308,7 @@ Object meshToHalfEdge(const Mesh& mesh) {
         shared_ptr<HalfEdge> firstHalfEdge;
 
         for(int vertexIndex: faceIndices){
-            shared_ptr<HalfEdge> halfEdge = make_shared<HalfEdge>(HalfEdge(faceIdCounter++));
+            shared_ptr<HalfEdge> halfEdge = make_shared<HalfEdge>(HalfEdge(halfEdgeIdCounter++));
             if(previous != nullptr){
                 previous->next = halfEdge;
                 halfEdge->previous = previous;
@@ -431,6 +369,7 @@ Object load(string fileLocation, string fileName) {
         Mesh mesh = loadFile(fileLocation);
         cout << "\tOBJ file loaded successfully: " << fileLocation << std::endl;
         object = meshToHalfEdge(mesh);
+        object.objFile = fileName;
         cout << "\tmesh successfully made for " << fileName << std::endl;
 
     }
@@ -438,29 +377,6 @@ Object load(string fileLocation, string fileName) {
         message = "in loadModel " + message;
         throw message;
     }
-    cout << "\tchecking consistency\n";
-    if(!objectFacesConsistent){
-        cout << "\tmaking " << fileName << " consistently faced: " << flush;
-        makeObjectFacesConsistent(object);
-        cout << "success\n";
-    }
-    cout << "\tchecking if object tri\n";
-    if(!objectTri(object)){
-        cout << "\tmaking " << fileName << " triangle mesh: " << flush;
-        makeObjectTri(object);
-        cout << "success\n";
-    }
-    cout << "\tchecking closed\n";
-    if(!objectClosed){
-        cerr << fileLocation << " not closed\n";
-    }
-    cout << "\tchecking connected\n";
-    if(!objectConnected){
-        cerr << fileLocation << " not fully connected\n";
-    }
-    cout << "\tchecking manifold\n";
-    if(!objectManifold){
-        cerr << fileLocation << " not manifold\n";
-    }
+    checkMesh(object, fileName);
     return object;
 }

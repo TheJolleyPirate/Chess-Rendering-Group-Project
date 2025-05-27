@@ -2,27 +2,8 @@
 #include <object.hpp>
 #include <cfloat>
 
-bool objectClosed(const Object &object);
-
-void makeObjectClosed(Object &object);
-
-bool facesClosed(const Object &object);
-
-bool objectConnected(const Object &object);
-
-void makeObjectConnected(Object &object);
-
-bool objectManifold(const Object &object);
-
-void makeObjectManifold(Object &object);
-
-bool objectFacesConsistent(const Object &object);
-
-void makeObjectFacesConsistent(Object &object);
-
-bool objectTri(const Object &object);
-
-void makeObjectTri(Object &object);
+void checkMesh(Object &object, const std::string &fileName);
+bool saveMeshASOBJ(const Object &object);
 
 class Node;
 class Trapezoid;
@@ -38,7 +19,7 @@ class Node{
         };
         enum NodeType nodeType;
         std::weak_ptr<Vertex> vertex; //the vertex this represents if nodetype is vertex
-        std::weak_ptr<HalfEdge> edge; //the edge this represents if nodetype is edge
+        std::shared_ptr<HalfEdge> edge; //the edge this represents if nodetype is edge
         std::shared_ptr<Trapezoid> trapezoid; //the trapezoid this represents if nodetype is trapezoid
         const int id; //unique node id
         std::shared_ptr<Node> left; //left child node
@@ -47,75 +28,114 @@ class Node{
         Node(const int _id): id(_id){}
 };
 
+class SeidelRay{
+    public:
+        std::shared_ptr<Vertex> start; //origin vertex of ray
+        Eigen::Vector3f leftEnd; //point ray terminates in -x direction
+        Eigen::Vector3f rightEnd; //point ray terminates in +x direction
+        float yValue; //the y value of the ray
+        SeidelRay(std::shared_ptr<Vertex> start, std::vector<std::shared_ptr<HalfEdge>> faceEdges, std::map<int, Eigen::Vector3f> &rotatedPos){
+            float rightX = FLT_MAX;
+            Eigen::Vector3f rotatedStart = rotatedPos.at(start->id);
+            rightEnd = rotatedStart;
+            float leftX = -FLT_MAX;
+            leftEnd = rotatedStart;
+            yValue = rotatedStart.y();
+            this->start = start;
+            for(std::shared_ptr<HalfEdge> halfEdge : faceEdges){
+                Eigen::Vector3f origin = rotatedPos.at(halfEdge->vertex->id);
+                Eigen::Vector3f dest = rotatedPos.at(halfEdge->next->vertex->id);
+                //if yValue between origin and dest
+                if((origin.y() >= yValue && yValue >= dest.y()) || (origin.y() <= yValue && yValue <= dest.y())){
+                    float yOrigin = origin.y();
+                    float yDest = dest.y();
+                    float dy = yDest - yOrigin;
+                    // if dy is roughly equal to 0
+                    if(std::fabs(dy) < FLT_EPSILON){
+                        //if yvalue roughly equal to either yorigin or ydest
+                        if(std::fabs(yValue - yOrigin) > FLT_EPSILON || std::fabs(yValue - yDest) > FLT_EPSILON){
+                            if(origin.x() < dest.x()){
+                                if(origin.x() > rotatedStart.x() && origin.x() < rightX){
+                                    rightEnd = origin;
+                                }
+                                if(dest.x() < rotatedStart.x() && dest.x() > leftX){
+                                    leftEnd = dest;
+                                }
+                            }
+                        }
+                    }
+                    else{
+                        float mult = (yValue - yOrigin) / dy;
+                        Eigen::Vector3f intercept = origin + (mult * (dest - origin));
+                        if(intercept.x() > rotatedStart.x() && intercept.x() < rightX){
+                            rightEnd = intercept;
+                        }
+                        if(intercept.x() < rotatedStart.x() && intercept.x() > leftX){
+                            leftEnd = intercept;
+                        }
+                    }
+                }
+            }
+        }
+};
+
 class Trapezoid{
     public:
         std::vector<std::shared_ptr<Trapezoid>> up; //trapezoids directly above this one
         std::vector<std::shared_ptr<Trapezoid>> down; //trapezoids directly below this one
-        std::weak_ptr<HalfEdge> lseg; //left edge
-        std::weak_ptr<HalfEdge> rseg; //right edge
+        std::shared_ptr<HalfEdge> lseg; //left edge
+        std::shared_ptr<HalfEdge> rseg; //right edge
         std::weak_ptr<Node> sink; //Position of trapezoid in tree structure
         bool validState; //Represents validity of trapezoid (Inside or outside)
-        const int id; //unique ID for this Trapezoid
         std::shared_ptr<SeidelRay> highRay; //the ray which bounds the top of the trapezoid
         std::shared_ptr<SeidelRay> lowRay; //the ray which bounds the bottom of the trapezoid
-        Trapezoid(std::weak_ptr<Node> weakNode, std::shared_ptr<SeidelRay> lowRay, std::shared_ptr<SeidelRay> highRay, int id): id(id){
+        Trapezoid(std::weak_ptr<Node> weakNode, std::shared_ptr<SeidelRay> lowRay, std::shared_ptr<SeidelRay> highRay){
             this->sink = weakNode.lock()->parent;
             this->highRay = highRay;
             this->lowRay = lowRay;
-            setLeftEdge(weakNode);
-            setRightEdge(weakNode);
+            setEdges(weakNode);
         }
-        void setLeftEdge(const std::weak_ptr<Node> &weakNode){
+        void setEdges(const std::weak_ptr<Node> &weakNode){
             std::shared_ptr<Node> node = weakNode.lock();
             int previous = node->id;
             std::shared_ptr<Node> current = node->parent.lock();
-            std::weak_ptr<HalfEdge> edge;
             if(!current){
                 return;
             }
+            bool foundLeft = false;
+            bool foundRight = false;
             while(true){
                 if(current->nodeType == Node::EDGE){
-                    if(current->left == nullptr || current->left->id != previous){
-                        edge = current->edge;
-                        break;
+                    if (!foundLeft && (!current->left  || current->left->id  != previous)) { 
+                        lseg = current->edge;
+                        foundLeft = true;
+                        if(foundRight){
+                            return;
+                        }
+                    }
+                    if (!foundRight && (!current->right  || current->right->id  != previous)) { 
+                        rseg = current->edge;
+                        foundRight = true;
+                        if(foundLeft){
+                            return;
+                        }
                     }
                 }
                 previous = current->id;
                 current = current->parent.lock();
+                //if reached the top of the tree
                 if(!current){
                     return;
                 }
             };
-            this->lseg = edge;
         }
-        void setRightEdge(const std::weak_ptr<Node> &weakNode){
-            std::shared_ptr<Node> node = weakNode.lock();
-            int previous = node->id;
-            std::shared_ptr<Node> current = node->parent.lock();
-            std::weak_ptr<HalfEdge> edge;
-            if(!current){
-                return;
-            }
-            while(true){
-                if(current->nodeType == Node::EDGE){
-                    if(current->right == nullptr || current->right->id != previous){
-                        edge = current->edge;
-                        break;
-                    }
-                }
-                previous = current->id;
-                current = current->parent.lock();
-                if(!current){
-                    return;
-                }
-            };
-            this->rseg = edge;
-        }
+        
         bool inPolygon(){
-            if(lseg.lock() == nullptr || rseg.lock() == nullptr){
-                validState = false;
+            validState = false;
+            if(!lseg || !rseg || !highRay || !lowRay){
                 return false;
             }
+            
             //get current node from trapezoid
             std::shared_ptr<Node> currentNode = sink.lock();
             //traverse upward until left or right edge found
@@ -136,16 +156,25 @@ class Trapezoid{
                     break;
                 }
             }
-            int counter = 0;
-            findAdjacentTrapezoid(currentNode, directionLeft, counter);
-            if(counter % 2 == 0){
-                validState = false;
-                return false;
-            }
-            else{
+
+            int counterRight = 0;
+            findAdjacentTrapezoid(currentNode, directionLeft, counterRight);
+
+            // try the opposite direction as a backup
+            int counterLeft = 0;
+            findAdjacentTrapezoid(currentNode, !directionLeft, counterLeft);
+
+            if ((counterRight % 2) || (counterLeft % 2)) {
                 validState = true;
                 return true;
             }
+            else {
+                validState = false;
+                return false;
+            }
+        }
+        void setValidState(){
+            inPolygon();
         }
     private:
         void findAdjacentTrapezoid(std::shared_ptr<Node> currentNode, bool directionLeft, int &counter){
@@ -162,7 +191,7 @@ class Trapezoid{
                 if(currentNode->nodeType == Node::TRAPAZOID){
                     counter += 1;
                     //check if tree outside polygon
-                    if(currentNode->trapezoid->lseg.lock() && currentNode->trapezoid->rseg.lock()){
+                    if(currentNode->trapezoid->lseg && currentNode->trapezoid->rseg){
                         //get segment according to direction
                         while(true){
                             int previous = currentNode->id;
@@ -204,56 +233,5 @@ class Trapezoid{
                     }
                 }
             }
-        }
-};
-
-class SeidelRay{
-    public:
-        std::shared_ptr<Vertex> start; //origin vertex of ray
-        Eigen::Vector3f leftEnd; //point ray terminates in -x direction
-        Eigen::Vector3f rightEnd; //point ray terminates in +x direction
-        float yValue; //the y value of the ray
-        SeidelRay(std::shared_ptr<Vertex> start, std::vector<std::shared_ptr<HalfEdge>> faceEdges){
-            int yValue = start->position.y();
-            float rightX = FLT_MAX;
-            Eigen::Vector3f rightEnd = start->position;
-            float leftX = -FLT_MAX;
-            Eigen::Vector3f leftEnd = start->position;
-            for(std::shared_ptr<HalfEdge> halfEdge : faceEdges){
-                Eigen::Vector3f origin = halfEdge->vertex->position;
-                Eigen::Vector3f dest = halfEdge->next->vertex->position;
-                //if yValue between origin and dest
-                if((origin.y() > yValue && yValue > dest.y()) || (origin.y() < yValue && yValue < dest.y())){
-                    float yOrigin = origin.y();
-                    float yDest = dest.y();
-                    float dy = yDest - yOrigin;
-                    if(std::abs(dy) < 1e-8f){
-                        if(yValue == yOrigin || yValue == yDest){
-                            if(origin.x() < dest.x()){
-                                if(origin.x() > start->position.x() && origin.x() < rightX){
-                                    rightEnd = origin;
-                                }
-                                if(dest.x() < start->position.x() && dest.x() > leftX){
-                                    leftEnd = dest;
-                                }
-                            }
-                        }
-                    }
-                    else{
-                        float mult = (yValue - yOrigin) / dy;
-                        Eigen::Vector3f intercept = origin + (mult * (dest - origin));
-                        if(intercept.x() > start->position.x() && intercept.x() < rightX){
-                            rightEnd = intercept;
-                        }
-                        if(intercept.x() < start->position.x() && intercept.x() > leftX){
-                            leftEnd = intercept;
-                        }
-                    }
-                }
-            }
-            this->start = start;
-            this->yValue = yValue;
-            this->rightEnd = rightEnd;
-            this->leftEnd = leftEnd;
         }
 };

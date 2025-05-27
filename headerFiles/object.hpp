@@ -14,7 +14,7 @@ class Vertex;
 
 class HalfEdge{
     public:
-        int id; //unique within object
+        int id; //unique within face
         std::shared_ptr<HalfEdge> next;
         std::weak_ptr<HalfEdge> previous; //make doubly linked, as being singly linked is stupid
         std::weak_ptr<HalfEdge> twin;
@@ -57,7 +57,7 @@ class Face{
 
 class Vertex{
     public:
-        int id; //unique within object
+        int id; //unique within face
         std::weak_ptr<HalfEdge> halfEdge;
         Eigen::Vector3f position;
         Eigen::Vector3f normal = Eigen::Vector3f(0, 0, 0);
@@ -85,6 +85,7 @@ class Vertex{
         Vertex(){}
 
         // Get all the half edges that originate from this vertex
+        //assumes that vertex is manifold
         std::vector<std::shared_ptr<HalfEdge>> neighbourHalfEdges() {
             std::vector<std::shared_ptr<HalfEdge>> neighbourhood;
             auto he = this->halfEdge;
@@ -102,6 +103,10 @@ class Vertex{
             }
             return this->normal;
         }
+
+        bool operator < (const Vertex &other) const {
+            return id < other.id;
+        }
 };
 
 class Material{
@@ -109,6 +114,7 @@ class Material{
         Eigen::Vector3f colour;
         std::string diffuseTextureFile;
         Texture diffuseTexture = Texture(""); //default empty texture;
+        std::string mtlFile;
         //below are optional
         std::string specularTextureFile;
         std::string ambiantTextureFile;
@@ -167,4 +173,5 @@ class Object{
         std::vector<std::shared_ptr<HalfEdge>> halfEdges;
         std::vector<std::shared_ptr<Vertex>> vertices;
         Material material;
+        std::string objFile;
 };

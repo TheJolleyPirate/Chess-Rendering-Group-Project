@@ -4,11 +4,11 @@
 #include <cmath>
 #include "Eigen/Dense"
 
-#include <headerFiles/rasterizer.hpp>
-#include <headerFiles/scene.hpp>
-#include <headerFiles/light.hpp>
-#include <headerFiles/object.hpp>
-#include <headerFiles/camera.hpp>
+#include <rasterizer.hpp>
+#include <scene.hpp>
+#include <light.hpp>
+#include <object.hpp>
+#include <camera.hpp>
 
 using namespace std;
 using namespace Eigen;
