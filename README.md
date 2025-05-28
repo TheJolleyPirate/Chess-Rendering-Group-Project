@@ -2,10 +2,6 @@
 
 Repository for COMP4610/8610 Computer Graphics final project.
 
-## UML Diagram
-
-![UML diagram of intended class structure](/UML-Diagram.png)
-
 ## Report
 
 The report can be found and edited [here](https://www.overleaf.com/2799383378sxcvnypskhrb#a5c444).
