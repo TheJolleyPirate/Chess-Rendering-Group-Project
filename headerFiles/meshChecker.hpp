@@ -9,6 +9,10 @@ class Node;
 class Trapezoid;
 class SeidelRay;
 
+// Triangulation method configuration (0=Seidel, 1=Fan, 2=Ear Clipping)
+void setTriangulationMethod(int method);
+std::string getTriangulationMethod();
+
 /*by Daniel Jolley-Rogers u7511912
 defines a node for the Seidel tree*/
 class Node{
