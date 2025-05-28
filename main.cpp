@@ -13,8 +13,11 @@
 #include <shader.hpp>
 #include <pathtracer.hpp>
 #include <loadModel.hpp>
+#include <meshChecker.hpp>
 #include <shader.hpp>
 #include <scene.hpp>
+
+
 
 using namespace std;
 using namespace Eigen;
@@ -102,11 +105,13 @@ void renderScene(Scene scene){
 
 }
 
-int RENDER_METHOD = 1; // 0 for rasterization, 1 for ray tracing
+int RENDER_METHOD = 0; // 0 for rasterization, 1 for ray tracing
 
 int main() {
+    
     if (RENDER_METHOD == 0) {
         try{
+            setTriangulationMethod(0); // 0 for seidel, 1 for fan triangulation, 2 for ear clipping
             cout << "loading models\n";
             std::map<std::string, Object> objects = loadModels("../Models/");
             cout << "models loaded\n";

@@ -1997,3 +1997,26 @@ int main(int argc, char** argv){
         cerr << "exception message: " << message << "\n";
     }
 }
+
+/* Implementation of triangulation method configuration functions */
+void setTriangulationMethod(int method) {
+    if (method == 0) g_triangulationMethod = SEIDEL_TRIANGULATION;
+    else if (method == 1) g_triangulationMethod = FAN_TRIANGULATION;
+    else if (method == 2) g_triangulationMethod = EAR_CLIPPING_TRIANGULATION;
+    else g_triangulationMethod = SEIDEL_TRIANGULATION; // default
+    
+    cout << "Triangulation method set to: " << getTriangulationMethod() << "\n";
+}
+
+std::string getTriangulationMethod() {
+    switch (g_triangulationMethod) {
+        case SEIDEL_TRIANGULATION:
+            return "Seidel";
+        case FAN_TRIANGULATION:
+            return "Fan";
+        case EAR_CLIPPING_TRIANGULATION:
+            return "Ear Clipping";
+        default:
+            return "Unknown";
+    }
+}
