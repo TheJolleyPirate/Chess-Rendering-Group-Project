@@ -6,7 +6,8 @@
 #include "light.hpp"
 #include <Eigen/Core>
 
-// Fragment shader payload structure from CLab2
+/*by Matthew Reynolds u6949604
+Fragment shader payload structure from CLab2*/
 struct fragment_shader_payload
 {
     fragment_shader_payload(const Eigen::Vector3f& col, const Eigen::Vector3f& nor, const Eigen::Vector2f& tc, const std::vector<Light> vl, Texture* tex) :

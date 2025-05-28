@@ -3,9 +3,11 @@
 #include <opencv2/opencv.hpp>
 #include <omp.h>
 
+/*by Matthew Reynolds u6949604*/
 PathTracer::PathTracer(int width, int height, int spp)
     : width_(width), height_(height), spp_(spp), framebuffer_(width * height) {}
 
+/*by Matthew Reynolds u6949604*/
 void PathTracer::buildBVH(const Scene &scene) {
     lights_.clear();
     for (const auto light : scene.lights) { // temporary solution for point lights
@@ -43,6 +45,7 @@ void PathTracer::buildBVH(const Scene &scene) {
     std::cout << "BVH finished" << std::endl;
 }
 
+/*by Matthew Reynolds u6949604*/
 Eigen::Vector3f PathTracer::estimateDirect(const HitRecord &hit, const Eigen::Vector3f &wo) {
     if (lights_.empty())
         return Eigen::Vector3f::Zero();
@@ -70,6 +73,7 @@ Eigen::Vector3f PathTracer::estimateDirect(const HitRecord &hit, const Eigen::Ve
     return brdf.cwiseProduct(emission) * (cosTheta * cosLight) / (distanceSquared * pdf);
 }
 
+/*by Matthew Reynolds u6949604*/
 Eigen::Vector3f PathTracer::trace(const Ray &ray) {
     HitRecord hit;
     if (!bvh_.intersect(ray, hit))
@@ -96,6 +100,7 @@ Eigen::Vector3f PathTracer::trace(const Ray &ray) {
     return directLight + (indirectLight / prr);
 }
 
+/*by Matthew Reynolds u6949604*/
 Eigen::Vector3f PathTracer::samplePixel(int x, int y, const Camera &cam) {
     Eigen::Vector3f color(0.0f, 0.0f, 0.0f);
     for (int i = 0; i < spp_; ++i) {
@@ -107,6 +112,7 @@ Eigen::Vector3f PathTracer::samplePixel(int x, int y, const Camera &cam) {
     return color / spp_;
 }
 
+/*by Matthew Reynolds u6949604*/
 void PathTracer::saveImage(const std::string &outputFile) {
     std::stringstream ss;
     ss << outputFile << ".ppm";
@@ -123,6 +129,7 @@ void PathTracer::saveImage(const std::string &outputFile) {
     fclose(fp);
 }
 
+/*by Matthew Reynolds u6949604*/
 void PathTracer::render(const Scene &scene, const Camera &camera, const std::string &outputFile) {
     std::cout << "Build BVH" << std::endl;
     buildBVH(scene);

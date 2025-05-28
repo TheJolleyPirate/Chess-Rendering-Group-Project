@@ -4,7 +4,8 @@
 #include <Eigen/Dense>
 #include "ray.hpp"
 
-// This class represents a camera in 3D space, with position, target, up vector, field of view (FOV), aspect ratio, and near/far planes.
+/*by Matthew Reynolds u6949604
+This class represents a camera in 3D space, with position, target, up vector, field of view (FOV), aspect ratio, and near/far planes.*/
 class Camera {
 public:
     Eigen::Vector3f position;

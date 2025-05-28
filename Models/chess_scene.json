@@ -1,4 +1,6 @@
+
 {
+    "_comment": "by Yue Zhu u7442130, refactored by Daniel Jolley-Rogers u7511912, describes the contents and arrangement of a scene*/",
     "objects": [
         {
             "model": "board",

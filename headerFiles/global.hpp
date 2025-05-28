@@ -7,12 +7,14 @@
 
 const float EPSILON = std::numeric_limits<float>::epsilon();
 
+/*by Matthew Reynolds u6949604*/
 inline float randomFloat() {
     static std::mt19937 generator(std::random_device{}());
     static std::uniform_real_distribution<float> distribution(0.0f, 1.0f);
     return distribution(generator);
 }
 
+/*by Matthew Reynolds u6949604*/
 inline void updateProgress(float progress) {
     int barWidth = 50;
 

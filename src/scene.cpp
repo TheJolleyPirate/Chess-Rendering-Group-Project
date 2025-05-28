@@ -6,6 +6,8 @@
 using json = nlohmann::json;
 using namespace Eigen;
 
+/*by Daniel Jolley-Rogers u7511912
+applies a Eigen transform to an object*/
 void applyTransform(Object &object, const Affine3f &transform) {
     Matrix4f T = transform.matrix();
     for (auto& v : object.vertices) {
@@ -16,7 +18,10 @@ void applyTransform(Object &object, const Affine3f &transform) {
     }
 }
 
-Scene Scene::loadSceneFromJson(const std::map<std::string, Object>& rawObjects, const std::string& fileJSON) {
+/*by Yue Zhu u7442130
+refactored by Daniel Jolley-Rogers u7511912
+uses a JSON file to construct the scene*/
+Scene loadSceneFromJson(const std::map<std::string, Object>& rawObjects, const std::string& fileJSON) {
     std::ifstream in(fileJSON);
     if (!in.is_open()) {
         throw std::runtime_error("Cannot open JSON scene file: " + fileJSON);

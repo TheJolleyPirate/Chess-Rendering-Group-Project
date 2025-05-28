@@ -3,7 +3,8 @@
 #include <algorithm>
 #include <cmath>
 
-// Moller-Trumbore intersection algorithm for triangles
+/*by Matthew Reynolds u6949604
+Moller-Trumbore intersection algorithm for triangles*/
 bool Triangle::intersect(const Ray &ray, float &tOut, float &u, float &v) const {
     Eigen::Vector3f edge1 = v1 - v0;
     Eigen::Vector3f edge2 = v2 - v0;
@@ -28,6 +29,7 @@ bool Triangle::intersect(const Ray &ray, float &tOut, float &u, float &v) const 
     return tOut > EPSILON; // Return true if t is positive, indicating a hit in front of the ray origin
 }
 
+/*by Matthew Reynolds u6949604*/
 Eigen::Vector3f Triangle::sample(float &pdf) const {
     float r1 = randomFloat();
     float r2 = randomFloat();
@@ -38,6 +40,7 @@ Eigen::Vector3f Triangle::sample(float &pdf) const {
     return a * v0 + b * v1 + c * v2;
 }
 
+/*by Matthew Reynolds u6949604*/
 static void computeBounds(const std::vector<Triangle> &tris, Eigen::Vector3f &bmin, Eigen::Vector3f &bmax) {
     bmin = Eigen::Vector3f::Constant(std::numeric_limits<float>::infinity());
     bmax = Eigen::Vector3f::Constant(-std::numeric_limits<float>::infinity());
@@ -47,10 +50,12 @@ static void computeBounds(const std::vector<Triangle> &tris, Eigen::Vector3f &bm
     }
 }
 
+/*by Matthew Reynolds u6949604*/
 void BVHAccel::build(std::vector<Triangle> &triangles) {
     root_ = buildNode(triangles, 0);
 }
 
+/*by Matthew Reynolds u6949604*/
 std::unique_ptr<BVHNode> BVHAccel::buildNode(std::vector<Triangle> &triangles, int depth) {
     auto node = std::make_unique<BVHNode>();
     computeBounds(triangles, node->boundsMin, node->boundsMax);
@@ -82,10 +87,12 @@ std::unique_ptr<BVHNode> BVHAccel::buildNode(std::vector<Triangle> &triangles, i
     return node; // Internal node
 }
 
+/*by Matthew Reynolds u6949604*/
 bool BVHAccel::intersect(const Ray &ray, HitRecord &hit) const {
     return intersectNode(root_.get(), ray, hit);
 }
 
+/*by Matthew Reynolds u6949604*/
 bool BVHAccel::intersectNode(const BVHNode *node, const Ray &ray, HitRecord &hit) const {
     Eigen::Vector3f invDir = ray.direction.cwiseInverse();
     Eigen::Vector3f t0 = (node->boundsMin - ray.origin).cwiseProduct(invDir);

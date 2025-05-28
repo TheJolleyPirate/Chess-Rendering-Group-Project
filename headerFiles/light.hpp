@@ -6,6 +6,8 @@ class Light;
 class QuadrilateralAreaLight;
 class ellipseAreaLight;
 
+/*by Daniel Jolley-Rogers u7511912
+defines the basic light object*/
 class Light{
     public:
         Eigen::Vector3f position; // {x, y, z}
@@ -20,6 +22,8 @@ class Light{
         }
 };
 
+/*by Daniel Jolley-Rogers u7511912
+defines a quadrilateral area light*/
 class QuadrilateralAreaLight: Light{
     //by default this is facing +z, need to rotate to place in right position
     //do this by setting rotation matrix
@@ -54,6 +58,8 @@ class QuadrilateralAreaLight: Light{
     }
 };
 
+/*by Daniel Jolley-Rogers u7511912
+defines an ellipitical area light*/
 class ellipseAreaLight: Light{
     //by default this is facing +z, need to rotate to place in right position
     //do this by setting rotation matrix

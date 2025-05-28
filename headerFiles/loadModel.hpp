@@ -2,6 +2,8 @@
 
 #include <object.hpp>
 
+/*by Daniel Jolley-Rogers u7511912
+saves information about a raw unprocessed vertex*/
 struct RawVertex{
     Eigen::Vector3f position;
     Eigen::Vector3f normal;
@@ -23,6 +25,8 @@ struct RawVertex{
     }
 };
 
+/*by Daniel Jolley-Rogers u7511912
+defines a basic mesh object*/
 struct Mesh{
     std::vector<RawVertex> vertices;
     std::vector<std::vector<int>> faces;

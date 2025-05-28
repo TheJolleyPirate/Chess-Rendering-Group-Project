@@ -1,3 +1,4 @@
+#by Daniel Jolley-Rogers u7511912
 cmake_minimum_required(VERSION 3.10)
 project(chessRendering)
 

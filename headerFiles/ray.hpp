@@ -3,6 +3,7 @@
 
 #include <Eigen/Dense>
 
+/*by Matthew Reynolds u6949604*/
 struct Ray {
     Eigen::Vector3f origin;
     Eigen::Vector3f direction;

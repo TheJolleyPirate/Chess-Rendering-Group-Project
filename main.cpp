@@ -2,7 +2,7 @@
 #include <string>
 #include <vector>
 #include <cmath>
-#include "Eigen/Dense"
+#include <Eigen/Dense>
 #include <filesystem>
 #include <map>
 
@@ -11,15 +11,17 @@
 #include <rasterizer.hpp>
 #include <camera.hpp>
 #include <shader.hpp>
-#include "pathtracer.hpp"
-
-#include <loadModel.cpp>
-#include <shader.cpp>
+#include <pathtracer.hpp>
+#include <loadModel.hpp>
+#include <shader.hpp>
+#include <scene.hpp>
 
 using namespace std;
 using namespace Eigen;
 using namespace filesystem;
 
+/*by Daniel Jolley-Rogers u7511912
+calls the loadModel function on a single file*/
 void loadModel(map<string, Object> &objects, string fileLocation){
     cout << "loading model: " << fileLocation << "\n";
     char delim = '/';
@@ -37,6 +39,8 @@ void loadModel(map<string, Object> &objects, string fileLocation){
     objects[fileName] = object;
 }
 
+/*by Daniel Jolley-Rogers u7511912
+calls the loadModel function on a list of files*/
 map<string, Object> loadModels(vector<string> files){
     map<string, Object> objects;
     for(string file : files){
@@ -45,6 +49,8 @@ map<string, Object> loadModels(vector<string> files){
     return objects;
 }
 
+/*by Daniel Jolley-Rogers u7511912
+returns all files in a folder + subfolders which have the file extension .obj*/
 void getFiles(vector<string> &files, string folder){
     for (auto &entry : directory_iterator(folder)){
         if(entry.is_directory()){
@@ -59,6 +65,8 @@ void getFiles(vector<string> &files, string folder){
     }
 }
 
+/*by Daniel Jolley-Rogers u7511912
+calls the loadModel function on all files with the file extension .obj in a given folder + subfolders*/
 map<string, Object> loadModels(string folder){
     map<string, Object> objects;
     vector<string> files;
@@ -69,15 +77,8 @@ map<string, Object> loadModels(string folder){
     return objects;
 }
 
-void captureImage(){
-    
-}
-
-Matrix4f rotateScene(float angle, Vector3f axis){
-    
-    return Matrix4f::Identity();
-}
-
+/*by Matthew Reynolds u6949604
+creates a camera and calls the rasterizer to render the scene*/
 void renderScene(Scene scene){
     // Manually create camera for now -- potentially add to scene class
     Camera camera(Vector3f(0, 0, 10), Vector3f(0, 0, 0), Vector3f(0, 1, 0), 45.0f, 1.0f, 0.1f, 50.0f);
@@ -110,7 +111,7 @@ int main() {
             std::map<std::string, Object> objects = loadModels("../Models/");
             cout << "models loaded\n";
             cout << "building scene\n";
-            Scene scene = Scene::loadSceneFromJson(objects, "../Models/chess_scene.json");
+            Scene scene = loadSceneFromJson(objects, "../Models/chess_scene.json");
             cout << "scene built\n";
             cout << "rendering scene\n";
             auto start = std::chrono::system_clock::now();
@@ -128,7 +129,6 @@ int main() {
         catch(string message){
             cerr << "exception occurred, message: " << message << "\n";
         }    
-    return 0;
     } else {
         try {
             std::cout << "Path Tracer" << std::endl;
@@ -153,6 +153,6 @@ int main() {
                 std::cerr << "Error: " << message << std::endl;
                 return 1;
         }
-    return 0;
     }
+    return 0;
 }

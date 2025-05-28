@@ -12,6 +12,7 @@
 
 struct Mat;
 
+/*by Matthew Reynolds u6949604*/
 struct HitRecord {
     Eigen::Vector3f position;
     Eigen::Vector3f normal;
@@ -21,6 +22,7 @@ struct HitRecord {
     std::shared_ptr<Material> material;
 };
 
+/*by Matthew Reynolds u6949604*/
 struct Triangle {
     Eigen::Vector3f v0, v1, v2;
     Eigen::Vector3f n0, n1, n2;
@@ -33,6 +35,7 @@ struct Triangle {
     Eigen::Vector3f sample(float &pdf) const;
 };
 
+/*by Matthew Reynolds u6949604*/
 class BVHNode {
 public:
     Eigen::Vector3f boundsMin, boundsMax;
@@ -41,6 +44,7 @@ public:
     bool isLeaf() const { return !left && !right; }
 };
 
+/*by Matthew Reynolds u6949604*/
 class BVHAccel {
 public:
     BVHAccel() = default;

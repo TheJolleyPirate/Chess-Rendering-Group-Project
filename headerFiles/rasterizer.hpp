@@ -23,6 +23,7 @@ inline Buffers operator&(Buffers a, Buffers b) {
     return Buffers((int)a & (int)b);
 }
 
+/*by Matthew Reynolds u6949604*/
 class Rasterizer {
 public:
     Rasterizer(int w, int h);

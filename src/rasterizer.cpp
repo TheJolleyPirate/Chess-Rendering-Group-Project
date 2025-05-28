@@ -13,6 +13,7 @@
 using namespace std;
 using namespace Eigen;
 
+/*by Matthew Reynolds u6949604*/
 rst::Rasterizer::Rasterizer(int w, int h) : width(w), height(h) {
     frameBuffer.resize(w * h);
     depthBuffer.resize(w * h);
@@ -21,19 +22,23 @@ rst::Rasterizer::Rasterizer(int w, int h) : width(w), height(h) {
     texture = std::nullopt;
 }
 
+/*by Matthew Reynolds u6949604*/
 void rst::Rasterizer::setView(const Eigen::Matrix4f& v) {
     view = v;
 }
 
+/*by Matthew Reynolds u6949604*/
 void rst::Rasterizer::setProjection(const Eigen::Matrix4f& p) {
     projection = p;
 }
 
+/*by Matthew Reynolds u6949604*/
 void rst::Rasterizer::setFragmentShader(std::function<Eigen::Vector3f(fragment_shader_payload)> frag_shader) {
     fragment_shader = frag_shader;
 }
 
-// Clear the frame buffer and/or depth buffer
+/*by Matthew Reynolds u6949604
+Clear the frame buffer and/or depth buffer*/
 void rst::Rasterizer::clear(Buffers buff) {
     if ((buff & Buffers::Colour) == Buffers::Colour) {
         std::fill(frameBuffer.begin(), frameBuffer.end(), Eigen::Vector3f(0, 0, 0));
@@ -45,13 +50,14 @@ void rst::Rasterizer::clear(Buffers buff) {
     }
 }
 
-// Convert a 3D vector to a 4D vector
+/*by Matthew Reynolds u6949604
+Convert a 3D vector to a 4D vector*/
 auto to_vec4(const Eigen::Vector3f &v3, float w = 1.0f) {
     return Vector4f(v3.x(), v3.y(), v3.z(), w);
 }
 
-
-// Rasterize the objects in the scene
+/*by Matthew Reynolds u6949604
+Rasterize the objects in the scene*/
 void rst::Rasterizer::rasterizeObjects(Scene scene){
     int count = 1;
     for (auto& object : scene.objects) {
@@ -64,6 +70,7 @@ void rst::Rasterizer::rasterizeObjects(Scene scene){
     }
 }
 
+/*by Matthew Reynolds u6949604*/
 void rst::Rasterizer::draw(std::vector<std::shared_ptr<Face>> &faces, std::vector<Light> lights) {
     // Needed to manually map z screen positions to [nearPlane, farPlane] for current test camera
     float f1 = -(50 - 0.1) / 2.0f;
@@ -123,7 +130,8 @@ void rst::Rasterizer::draw(std::vector<std::shared_ptr<Face>> &faces, std::vecto
     postProcessBuffer();
 }
 
-// Check if a point (x, y) is inside a triangle defined by three vertices
+/*by Matthew Reynolds u6949604
+Check if a point (x, y) is inside a triangle defined by three vertices*/
 static bool insideTriangle(float x, float y, const Vector4f *_v) {
     Vector3f v[3];
     for (int i = 0; i < 3; i++)
@@ -138,7 +146,8 @@ static bool insideTriangle(float x, float y, const Vector4f *_v) {
     return false;
 }
 
-// Compute barycentric coordinates for a point (x, y) inside a triangle defined by three vertices
+/*by Matthew Reynolds u6949604
+Compute barycentric coordinates for a point (x, y) inside a triangle defined by three vertices*/
 static std::tuple<float, float, float> computeBarycentric2D(float x, float y, const Vector4f *v) {
     float c1 = (x * (v[1].y() - v[2].y()) + (v[2].x() - v[1].x()) * y + v[1].x() * v[2].y() - v[2].x() * v[1].y()) /
                (v[0].x() * (v[1].y() - v[2].y()) + (v[2].x() - v[1].x()) * v[0].y() + v[1].x() * v[2].y() -
@@ -152,12 +161,14 @@ static std::tuple<float, float, float> computeBarycentric2D(float x, float y, co
     return {c1, c2, c3};
 }
 
-// Convert a 2D screen coordinate (x, y) to a 1D index in the frame buffer
+/*by Matthew Reynolds u6949604
+Convert a 2D screen coordinate (x, y) to a 1D index in the frame buffer*/
 int rst::Rasterizer::getIndex(int x, int y) {
     return (height - y - 1) * width + x;
 }
 
-// Post-process the SSAA buffer to average the samples and store them in the main frame buffer
+/*by Matthew Reynolds u6949604
+Post-process the SSAA buffer to average the samples and store them in the main frame buffer*/
 void rst::Rasterizer::postProcessBuffer() {
     for (int x = 0; x < width; x++) {
         for (int y = 0; y < height; y++) {
@@ -170,12 +181,14 @@ void rst::Rasterizer::postProcessBuffer() {
     }
 }
 
-// Interpolates a 3D vector (e.g., color, normal) using barycentric coordinates
+/*by Matthew Reynolds u6949604
+Interpolates a 3D vector (e.g., color, normal) using barycentric coordinates*/
 static Eigen::Vector3f interpolate(float alpha, float beta, float gamma, const Eigen::Vector3f &vert1,
     const Eigen::Vector3f &vert2, const Eigen::Vector3f &vert3, float weight) {
     return (alpha * vert1 + beta * vert2 + gamma * vert3) / weight;
 }
 
+/*by Matthew Reynolds u6949604*/
 void rst::Rasterizer::rasterizeTriangle(std::vector<Vertex> &vertices, std::vector<Eigen::Vector3f> &view_pos, std::vector<Light> &view_lights) {
     // Convert vertices to 4D homogeneous coordinates
     Eigen::Vector4f v[3];
@@ -255,7 +268,8 @@ void rst::Rasterizer::rasterizeTriangle(std::vector<Vertex> &vertices, std::vect
     }
 }
 
-// Set a pixel in the frame buffer to a specific color
+/*by Matthew Reynolds u6949604
+Set a pixel in the frame buffer to a specific color*/
 void rst::Rasterizer::setPixel(const Vector2i& position, const Eigen::Vector3f& colour) {
     int index = getIndex(position.x(), position.y());
     frameBuffer[index] = colour;

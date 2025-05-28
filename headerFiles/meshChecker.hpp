@@ -9,6 +9,8 @@ class Node;
 class Trapezoid;
 class SeidelRay;
 
+/*by Daniel Jolley-Rogers u7511912
+defines a node for the Seidel tree*/
 class Node{
     public:
         enum NodeType{
@@ -28,57 +30,8 @@ class Node{
         Node(const int _id): id(_id){}
 };
 
-class SeidelRay{
-    public:
-        std::shared_ptr<Vertex> start; //origin vertex of ray
-        Eigen::Vector3f leftEnd; //point ray terminates in -x direction
-        Eigen::Vector3f rightEnd; //point ray terminates in +x direction
-        float yValue; //the y value of the ray
-        SeidelRay(std::shared_ptr<Vertex> start, std::vector<std::shared_ptr<HalfEdge>> faceEdges, std::map<int, Eigen::Vector3f> &rotatedPos){
-            float rightX = FLT_MAX;
-            Eigen::Vector3f rotatedStart = rotatedPos.at(start->id);
-            rightEnd = rotatedStart;
-            float leftX = -FLT_MAX;
-            leftEnd = rotatedStart;
-            yValue = rotatedStart.y();
-            this->start = start;
-            for(std::shared_ptr<HalfEdge> halfEdge : faceEdges){
-                Eigen::Vector3f origin = rotatedPos.at(halfEdge->vertex->id);
-                Eigen::Vector3f dest = rotatedPos.at(halfEdge->next->vertex->id);
-                //if yValue between origin and dest
-                if((origin.y() >= yValue && yValue >= dest.y()) || (origin.y() <= yValue && yValue <= dest.y())){
-                    float yOrigin = origin.y();
-                    float yDest = dest.y();
-                    float dy = yDest - yOrigin;
-                    // if dy is roughly equal to 0
-                    if(std::fabs(dy) < FLT_EPSILON){
-                        //if yvalue roughly equal to either yorigin or ydest
-                        if(std::fabs(yValue - yOrigin) > FLT_EPSILON || std::fabs(yValue - yDest) > FLT_EPSILON){
-                            if(origin.x() < dest.x()){
-                                if(origin.x() > rotatedStart.x() && origin.x() < rightX){
-                                    rightEnd = origin;
-                                }
-                                if(dest.x() < rotatedStart.x() && dest.x() > leftX){
-                                    leftEnd = dest;
-                                }
-                            }
-                        }
-                    }
-                    else{
-                        float mult = (yValue - yOrigin) / dy;
-                        Eigen::Vector3f intercept = origin + (mult * (dest - origin));
-                        if(intercept.x() > rotatedStart.x() && intercept.x() < rightX){
-                            rightEnd = intercept;
-                        }
-                        if(intercept.x() < rotatedStart.x() && intercept.x() > leftX){
-                            leftEnd = intercept;
-                        }
-                    }
-                }
-            }
-        }
-};
-
+/*by Daniel Jolley-Rogers u7511912
+defines a trapezoid for the Seidel tree*/
 class Trapezoid{
     public:
         std::vector<std::shared_ptr<Trapezoid>> up; //trapezoids directly above this one
@@ -87,9 +40,9 @@ class Trapezoid{
         std::shared_ptr<HalfEdge> rseg; //right edge
         std::weak_ptr<Node> sink; //Position of trapezoid in tree structure
         bool validState; //Represents validity of trapezoid (Inside or outside)
-        std::shared_ptr<SeidelRay> highRay; //the ray which bounds the top of the trapezoid
-        std::shared_ptr<SeidelRay> lowRay; //the ray which bounds the bottom of the trapezoid
-        Trapezoid(std::weak_ptr<Node> weakNode, std::shared_ptr<SeidelRay> lowRay, std::shared_ptr<SeidelRay> highRay){
+        float highRay; //the ray which bounds the top of the trapezoid
+        float lowRay; //the ray which bounds the bottom of the trapezoid
+        Trapezoid(std::weak_ptr<Node> weakNode, float lowRay, float highRay){
             this->sink = weakNode.lock()->parent;
             this->highRay = highRay;
             this->lowRay = lowRay;

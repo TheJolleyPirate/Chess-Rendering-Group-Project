@@ -7,6 +7,7 @@
 #include "bvh.hpp"
 #include <random>
 
+/*by Matthew Reynolds u6949604*/
 class Mat {
 public:
     virtual ~Mat() = default;
@@ -45,6 +46,7 @@ public:
     ) const = 0;
 };
 
+/*by Matthew Reynolds u6949604*/
 class Lambertian : public Mat {
 public:
     explicit Lambertian(const Material &material) : material_(material) {}

@@ -4,7 +4,7 @@
 #include <shader.hpp>
 #include <light.hpp>
 
-
+/*by Matthew Reynolds u6949604*/
 Eigen::Vector3f blinn_phong_fragment_shader(const fragment_shader_payload &payload) {
     // Material properties
     Eigen::Vector3f ka = Eigen::Vector3f(0.005, 0.005, 0.005);
@@ -52,7 +52,7 @@ Eigen::Vector3f blinn_phong_fragment_shader(const fragment_shader_payload &paylo
     return result_color * 255.0f;
 }
 
-
+/*by Matthew Reynolds u6949604*/
 Eigen::Vector3f texture_fragment_shader(const fragment_shader_payload &payload) {
     // Retrieve the texture colour at the current fragment's texture coordinates (given it exists)
     Eigen::Vector3f texture_color = {0, 0, 0};

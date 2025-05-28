@@ -12,6 +12,8 @@ class Face;
 class HalfEdge;
 class Vertex;
 
+/*by Daniel Jolley-Rogers u7511912
+defines a HalfEdge for the halfEdge structure*/
 class HalfEdge{
     public:
         int id; //unique within face
@@ -24,6 +26,8 @@ class HalfEdge{
         HalfEdge(){}
 };
 
+/*by Daniel Jolley-Rogers u7511912
+defines a face for the halfEdge structure*/
 class Face{
     public:
         int id; //unique within object
@@ -55,6 +59,8 @@ class Face{
         }
 };
 
+/*by Daniel Jolley-Rogers u7511912
+defines a vertex for the halfEdge structure*/
 class Vertex{
     public:
         int id; //unique within face
@@ -109,6 +115,8 @@ class Vertex{
         }
 };
 
+/*by Daniel Jolley-Rogers u7511912
+defines a material for the halfEdge structure*/
 class Material{
     public:
         Eigen::Vector3f colour;
@@ -167,6 +175,8 @@ class Material{
         }
 };
 
+/*by Daniel Jolley-Rogers u7511912
+defines an object using a half edge structure*/
 class Object{
     public:
         std::vector<std::shared_ptr<Face>> faces;

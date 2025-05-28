@@ -1,7 +1,8 @@
 #include "camera.hpp"
 #include <cmath>
 
-// Create camera for path tracing
+/*by Matthew Reynolds u6949604
+Create camera for path tracing*/
 Camera::Camera(Eigen::Vector3f &_position, Eigen::Vector3f &_target, Eigen::Vector3f &_up, float _fov, float _aspectRatio) {
     float theta = _fov * M_PI / 180.0f;
     float half_height = std::tan(theta / 2.0f);
@@ -16,6 +17,7 @@ Camera::Camera(Eigen::Vector3f &_position, Eigen::Vector3f &_target, Eigen::Vect
     lower_left_ = origin_ - (horizontal_ / 2.0f) - (vertical_ / 2.0f) - w;
 }
 
+/*by Matthew Reynolds u6949604*/
 Ray Camera::getRay(float u, float v) const {
     Eigen::Vector3f direction = lower_left_ + u * horizontal_ + v * vertical_ - origin_;
     return Ray(origin_, direction.normalized());

@@ -31,7 +31,25 @@
 },
 {
   "directory": "/home/danny/Desktop/Projects/computer graphics/Chess-Rendering-Group-Project/build",
-  "command": "/usr/bin/g++ -I/usr/include/eigen3 -I\"/home/danny/Desktop/Projects/computer graphics/Chess-Rendering-Group-Project\" -I\"/home/danny/Desktop/Projects/computer graphics/Chess-Rendering-Group-Project/headerFiles\" -I\"/home/danny/Desktop/Projects/computer graphics/Chess-Rendering-Group-Project/src\" -isystem /usr/include/opencv4 -g -std=gnu++17 -o CMakeFiles/chessRenderer.dir/main.cpp.o -c \"/home/danny/Desktop/Projects/computer graphics/Chess-Rendering-Group-Project/main.cpp\"",
+  "command": "/usr/bin/g++ -Dsupplemental_EXPORTS -I/usr/include/opencv4 -I/usr/include/eigen3 -I\"/home/danny/Desktop/Projects/computer graphics/Chess-Rendering-Group-Project\" -I\"/home/danny/Desktop/Projects/computer graphics/Chess-Rendering-Group-Project/headerFiles\" -I\"/home/danny/Desktop/Projects/computer graphics/Chess-Rendering-Group-Project/src\" -g -std=gnu++17 -fPIC -o CMakeFiles/supplemental.dir/src/bvh.cpp.o -c \"/home/danny/Desktop/Projects/computer graphics/Chess-Rendering-Group-Project/src/bvh.cpp\"",
+  "file": "/home/danny/Desktop/Projects/computer graphics/Chess-Rendering-Group-Project/src/bvh.cpp",
+  "output": "CMakeFiles/supplemental.dir/src/bvh.cpp.o"
+},
+{
+  "directory": "/home/danny/Desktop/Projects/computer graphics/Chess-Rendering-Group-Project/build",
+  "command": "/usr/bin/g++ -Dsupplemental_EXPORTS -I/usr/include/opencv4 -I/usr/include/eigen3 -I\"/home/danny/Desktop/Projects/computer graphics/Chess-Rendering-Group-Project\" -I\"/home/danny/Desktop/Projects/computer graphics/Chess-Rendering-Group-Project/headerFiles\" -I\"/home/danny/Desktop/Projects/computer graphics/Chess-Rendering-Group-Project/src\" -g -std=gnu++17 -fPIC -o CMakeFiles/supplemental.dir/src/camera.cpp.o -c \"/home/danny/Desktop/Projects/computer graphics/Chess-Rendering-Group-Project/src/camera.cpp\"",
+  "file": "/home/danny/Desktop/Projects/computer graphics/Chess-Rendering-Group-Project/src/camera.cpp",
+  "output": "CMakeFiles/supplemental.dir/src/camera.cpp.o"
+},
+{
+  "directory": "/home/danny/Desktop/Projects/computer graphics/Chess-Rendering-Group-Project/build",
+  "command": "/usr/bin/g++ -Dsupplemental_EXPORTS -I/usr/include/opencv4 -I/usr/include/eigen3 -I\"/home/danny/Desktop/Projects/computer graphics/Chess-Rendering-Group-Project\" -I\"/home/danny/Desktop/Projects/computer graphics/Chess-Rendering-Group-Project/headerFiles\" -I\"/home/danny/Desktop/Projects/computer graphics/Chess-Rendering-Group-Project/src\" -g -std=gnu++17 -fPIC -o CMakeFiles/supplemental.dir/src/pathtracer.cpp.o -c \"/home/danny/Desktop/Projects/computer graphics/Chess-Rendering-Group-Project/src/pathtracer.cpp\"",
+  "file": "/home/danny/Desktop/Projects/computer graphics/Chess-Rendering-Group-Project/src/pathtracer.cpp",
+  "output": "CMakeFiles/supplemental.dir/src/pathtracer.cpp.o"
+},
+{
+  "directory": "/home/danny/Desktop/Projects/computer graphics/Chess-Rendering-Group-Project/build",
+  "command": "/usr/bin/g++ -I/usr/include/eigen3 -I\"/home/danny/Desktop/Projects/computer graphics/Chess-Rendering-Group-Project\" -I\"/home/danny/Desktop/Projects/computer graphics/Chess-Rendering-Group-Project/headerFiles\" -I\"/home/danny/Desktop/Projects/computer graphics/Chess-Rendering-Group-Project/src\" -isystem /usr/include/opencv4 -g -std=gnu++17 -fopenmp -o CMakeFiles/chessRenderer.dir/main.cpp.o -c \"/home/danny/Desktop/Projects/computer graphics/Chess-Rendering-Group-Project/main.cpp\"",
   "file": "/home/danny/Desktop/Projects/computer graphics/Chess-Rendering-Group-Project/main.cpp",
   "output": "CMakeFiles/chessRenderer.dir/main.cpp.o"
 },

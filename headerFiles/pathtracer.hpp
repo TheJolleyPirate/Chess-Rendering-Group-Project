@@ -7,6 +7,7 @@
 #include "camera.hpp"
 #include "bvh.hpp"
 
+/*by Matthew Reynolds u6949604*/
 class PathTracer {
 public:
     PathTracer(int width, int height, int spp);

@@ -14,6 +14,9 @@
 using namespace std;
 using namespace Eigen;
 
+/*by Arafat Hasan and Quonux on stack overflow
+https://stackoverflow.com/questions/14265581/parse-split-a-string-in-c-using-string-delimiter-standard-c
+takes a string and splits it using a delimiter*/
 vector<string> split(const string &s, const char delim){
     vector<string> result;
     stringstream ss (s);
@@ -24,7 +27,9 @@ vector<string> split(const string &s, const char delim){
     }
     return result;
 }
-
+/*by Robert Smith
+refactored by Daniel Jolley-Rogers u7511912
+loads material information from a given .mtl file and texture files*/
 Material LoadMaterial(string path, string fileName){
     if(fileName.substr(fileName.size() - 4, 4) != ".mtl"){
         fileName.append(".mtl");
@@ -134,6 +139,9 @@ Material LoadMaterial(string path, string fileName){
     return material;
 }
 
+/*by Robert Smith
+refactored by Daniel Jolley-Rogers u7511912
+returns the vertex indices of a specific face*/
 vector<int> getVertexInfo(set<RawVertex> &vertices, const vector<string> &face, const vector<Vector3f> &positions, const vector<Vector2f> &tCoords, const vector<Vector3f> &normals){
     vector<int> verticesIndex;
     bool noNormal = false;
@@ -197,6 +205,9 @@ vector<int> getVertexInfo(set<RawVertex> &vertices, const vector<string> &face, 
     return verticesIndex;
 }
 
+/*by Robert Smith
+refactored by Daniel Jolley-Rogers u7511912
+loads a .obj file into a simple mesh object*/
 Mesh loadFile(string path){
     // If the file is not an .obj file return false
     Mesh mesh;
@@ -280,6 +291,9 @@ Mesh loadFile(string path){
     return mesh;
 }
 
+/*by Edwar Budiman u7898974
+refactered by Daniel Jolley-Rogers u7511912
+converts a given mesh into a half edge format*/
 Object meshToHalfEdge(const Mesh& mesh) {
     Object object;
     object.material = mesh.material;
@@ -363,6 +377,10 @@ Object meshToHalfEdge(const Mesh& mesh) {
     return object;
 }
 
+/*by Edwar Budiman u7898974
+refactered by Daniel Jolley-Rogers u7511912
+loads a given .obj file and then runs the mesh checker 
+to convert it to a tri mesh and clean up errors*/
 Object load(string fileLocation, string fileName) {
     Object object;
     try{

@@ -16,6 +16,8 @@
 using namespace std;
 using namespace Eigen;
 
+/*by Daniel Jolley-Rogers u7511912
+checks whether a given object is closed*/
 bool objectClosed(const Object &object){
     //if every halfEdge has a face, and a twin then the object is closed
     for(const shared_ptr<HalfEdge> &halfEdge : object.halfEdges){
@@ -34,6 +36,8 @@ bool objectClosed(const Object &object){
     return true;
 }
 
+/*by Daniel Jolley-Rogers u7511912
+attempts to make an object closed*/
 void makeObjectClosed(Object &object){
     //tries to make object closed by deleting halfEdges which are not part of a face
     auto toDelete = remove_if(
@@ -41,6 +45,8 @@ void makeObjectClosed(Object &object){
     object.halfEdges.erase(toDelete, object.halfEdges.end());
 }
 
+/*by Daniel Jolley-Rogers u7511912
+checks whether a given object is fully connected*/
 bool objectConnected(const Object &object){
     set<int> visited;
     shared_ptr<Vertex> startingVert = object.vertices[0];
@@ -71,6 +77,8 @@ bool objectConnected(const Object &object){
     return false;
 }
 
+/*by Daniel Jolley-Rogers u7511912
+attempts to make an object fully connected*/
 void makeObjectConnected(Object &object){
     //tries to make object connected by deleting vertices which are not part of a face
     auto toDelete = remove_if(
@@ -78,6 +86,8 @@ void makeObjectConnected(Object &object){
     object.vertices.erase(toDelete, object.vertices.end());
 }
 
+/*by Daniel Jolley-Rogers u7511912
+checks whether a given object is manifold*/
 bool objectManifold(const Object &object){
     //to check edge manifoldness, make sure their are exactly 2 faces on each edge.
     //first check to make sure only 2 faces share an edge
@@ -184,6 +194,8 @@ bool objectManifold(const Object &object){
     return true;
 }
 
+/*by Daniel Jolley-Rogers u7511912
+attempts to make an object pseudo manifold*/
 void makeObjectManifold(Object &object){
     //makes object psuedo manifold by connecting vertex fans even if there is a gap between them
     //this allows functions like Face::getHalfEdges() to work
@@ -273,6 +285,8 @@ void makeObjectManifold(Object &object){
     }
 }
 
+/*by Daniel Jolley-Rogers u7511912
+checks whether a given object has consisten facing*/
 bool objectFacesConsistent(const Object &object){
     //two adjacent polygons have a consistant orientation if touching edges face opposite directions
     //check two ways, first by comparing winding direction, and secondly by comparing normals
@@ -304,6 +318,8 @@ bool objectFacesConsistent(const Object &object){
     return true;
 }
 
+/*by Daniel Jolley-Rogers u7511912
+attempts to make an object's faces consistently faced*/
 void makeObjectFacesConsistent(Object &object){
     struct Edge{
         int vertex1;
@@ -459,6 +475,8 @@ void makeObjectFacesConsistent(Object &object){
     object.halfEdges = move(consistentHalfEdges);
 }
 
+/*by Daniel Jolley-Rogers u7511912
+checks whether a given object is a tri mesh*/
 bool objectTri(const Object &object){
     for(int i = 0; i < object.faces.size(); ++i){
         if(object.faces[i]->getHalfEdges().size() != 3){
@@ -468,6 +486,8 @@ bool objectTri(const Object &object){
     return true;
 }
 
+/*by Daniel Jolley-Rogers u7511912
+checks whether a given object is a quad mesh*/
 bool objectQuad(const Object &object){
     for(int i = 0; i < object.faces.size(); ++i){
         if(object.faces[i]->getHalfEdges().size() != 4){
@@ -477,7 +497,11 @@ bool objectQuad(const Object &object){
     return true;
 }
 
+/*by Daniel Jolley-Rogers u7511912
+code to make an object a tri mesh*/
 namespace seidel{
+    /*by Daniel Jolley-Rogers u7511912
+    stores information about a specific point*/
     struct Point{
         Vector3f position;
         Vector3f colour;
@@ -520,12 +544,16 @@ namespace seidel{
         }
     };
 
+    /*by Daniel Jolley-Rogers u7511912
+    returns the rotated position of a vertex with a given index*/
     Eigen::Vector3f getValue(int key,  std::map<int, Eigen::Vector3f> &rotatedPos){
         auto it = rotatedPos.find(key);
         assert(it != rotatedPos.end());
         return it->second;
     }
 
+    /*by Daniel Jolley-Rogers u7511912
+    decomposes a given quadrilateral into triangles, handles concave and self intersecting quadrilaterals*/
     vector<vector<Point>> triangulateQuad(Point A, Point B, Point C, Point D){
         auto concave = [&]() ->pair<int, int>{
             Vector3f AB = (B.position - A.position).normalized();
@@ -637,6 +665,8 @@ namespace seidel{
         }
     }    
 
+    /*by Daniel Jolley-Rogers u7511912
+    helper function to handle tie breaks when y or x values match*/
     Vector3f tieBreak(const Vector3f a, const Vector3f b){
         if(a.y() > b.y()){
             return a;
@@ -662,22 +692,24 @@ namespace seidel{
         }
     }
     
+    /*by Daniel Jolley-Rogers u7511912
+    adds a vertex node into the Siedel tree*/
     shared_ptr<Node> processVertexNode(const shared_ptr<Vertex> &vert, shared_ptr<Node> &tree, vector<shared_ptr<HalfEdge>> faceEdges, int &nodeID, map<int, Vector3f> &rotatedPos){
         if(tree->nodeType == Node::ROOT){
             //nodeType only root when tree is empty
-            shared_ptr<SeidelRay> ray = make_shared<SeidelRay>(vert, faceEdges, rotatedPos);
+            float ray = rotatedPos.at(vert->id).y();
             tree->nodeType = Node::VERTEX;
             tree->vertex = vert;
     
             tree->left = make_shared<Node>(Node(nodeID++));
             tree->left->parent = tree;
-            std::shared_ptr<Trapezoid> bottomTrap = make_shared<Trapezoid>(tree->left, nullptr, ray);
+            std::shared_ptr<Trapezoid> bottomTrap = make_shared<Trapezoid>(tree->left, -FLT_MAX, ray);
             tree->left->nodeType = Node::TRAPAZOID;
             tree->left->trapezoid = bottomTrap;
     
             tree->right = make_shared<Node>(nodeID++);
             tree->right->parent = tree;
-            std::shared_ptr<Trapezoid> topTrap = make_shared<Trapezoid>(tree->right, ray, nullptr);
+            std::shared_ptr<Trapezoid> topTrap = make_shared<Trapezoid>(tree->right, ray, FLT_MAX);
             tree->right->nodeType = Node::TRAPAZOID;
             tree->right->trapezoid = topTrap;
             topTrap->down.push_back(bottomTrap);
@@ -720,9 +752,9 @@ namespace seidel{
             else{
                 //if not vertex or edge must be trapezoid
                 shared_ptr<Trapezoid> old = currentNode->trapezoid;
-                shared_ptr<SeidelRay> ray = make_shared<SeidelRay>(vert, faceEdges, rotatedPos);
-                shared_ptr<SeidelRay> oldHighRay = old->highRay;
-                shared_ptr<SeidelRay> oldLowRay = old->lowRay;
+                float ray = rotatedPos.at(vert->id).y();
+                float oldHighRay = old->highRay;
+                float oldLowRay = old->lowRay;
                 currentNode->nodeType = Node::VERTEX;
                 currentNode->trapezoid = nullptr;
                 currentNode->vertex = vert;
@@ -751,10 +783,12 @@ namespace seidel{
         }
     }
     
+    /*by Daniel Jolley-Rogers u7511912
+    inserts an edge into the seidel tree at a given node*/
     void insertEdge(const shared_ptr<Node> &node, const shared_ptr<HalfEdge> &halfEdge, int &nodeID, map<int, Vector3f> &rotatedPos){
         shared_ptr<Trapezoid> old = node->trapezoid;
-        shared_ptr<SeidelRay> highRay = old->highRay;
-        shared_ptr<SeidelRay> lowRay = old->lowRay;
+        float highRay = old->highRay;
+        float lowRay = old->lowRay;
         node->nodeType = Node::EDGE;
         node->trapezoid = nullptr;
         node->edge = halfEdge;
@@ -925,6 +959,8 @@ namespace seidel{
         }
     }
     
+    /*by Daniel Jolley-Rogers u7511912
+    adds an edge into the siedel tree*/
     void processEdgeNode(const shared_ptr<HalfEdge> &halfEdge, const shared_ptr<Node> &lower, const shared_ptr<Node> &upper, int &nodeID, map<int, Vector3f> &rotatedPos){
         int placeInserted;
         //insert edge at upper
@@ -1015,6 +1051,9 @@ namespace seidel{
         }
     }
 
+    /*by Daniel Jolley-Rogers u7511912
+    finds the point where a ray intersects an edge and returns it 
+    with all relavent position, texture, normal and colour information*/
     inline Point yInterceptFinder(const shared_ptr<Vertex> origin, const shared_ptr<Vertex> dest, float yIntercept, bool fromPX, map<int, Vector3f> &rotatedPos){
         Vector3f rotatedOrigin = getValue(origin->id, rotatedPos);
         Vector3f rotatedDest = getValue(dest->id, rotatedPos);
@@ -1067,6 +1106,8 @@ namespace seidel{
         return Point(position, colour, textureCoords, normal);
     }
 
+    /*by Daniel Jolley-Rogers u7511912
+    the main seidel function, builds a tree then triangulates all the trapezoids in that tree*/
     vector<vector<Point>> seidel(const shared_ptr<Face> &face, Matrix4f rotationMatrix){
          //Seidel's algorithm for decomposing to trapezoids (quadralaterials)
         vector<vector<Point>> triangles;
@@ -1137,8 +1178,8 @@ namespace seidel{
             }
             //get vertices of trapezoid
             //use rays and side segments to interporlate the four vertices
-            float highY = trap->highRay->yValue;
-            float lowY = trap->lowRay->yValue;
+            float highY = trap->highRay;
+            float lowY = trap->lowRay;
             shared_ptr<HalfEdge> lseg = trap->lseg;
             shared_ptr<HalfEdge> rseg = trap->rseg;
             shared_ptr<Vertex> leftO = lseg->vertex;
@@ -1157,6 +1198,8 @@ namespace seidel{
         return triangles;
     }
 
+    /*by Daniel Jolley-Rogers u7511912
+    stores information about a planar segment of a polygon*/
     struct PlaneSegment{
         Vector3f normal;
         Vector3f planePoint;
@@ -1164,6 +1207,9 @@ namespace seidel{
         shared_ptr<HalfEdge> End;
     };
 
+    /*by Daniel Jolley-Rogers u7511912
+    checks whether a given polygon is planar either returns the whole polygon if it is
+    or one planar segment of the polygon if it isn't*/
     bool facePlanar(PlaneSegment &plane, const shared_ptr<HalfEdge> &halfEdge, set<int> &visited){
         shared_ptr<HalfEdge> adjacentHalfEdge;
         Vector3f currentVector = halfEdge->next->vertex->position - halfEdge->vertex->position;
@@ -1267,6 +1313,8 @@ namespace seidel{
         }
     }
 
+    /*by Daniel Jolley-Rogers u7511912
+    decomposes a polygon into planar segments*/
     vector<shared_ptr<Face>> planarDecompose(const shared_ptr<Face> &face, int &oldFaceID){
         //breaks a face into its planar segments
         auto enforceWinding = [](const shared_ptr<Face> &currentFace, const Vector3f& targetNormal) ->void{
@@ -1378,6 +1426,8 @@ namespace seidel{
         return planarFaces;
     }
 
+    /*by Daniel Jolley-Rogers u7511912
+    returns the rotation needed to rotate a given face onto the x-y plane*/
     Matrix4f getRotation(const shared_ptr<Face> &face){
         Vector3f normal = face->normal.normalized();
         static const Vector3f desiredFacing = Vector3f(0, 0, -1);
@@ -1392,6 +1442,8 @@ namespace seidel{
         return rotation;
     }
 
+    /*by Daniel Jolley-Rogers u7511912
+    decomposes a given face into triangles, shortcuts to the end if the face is already a triangle or is a quad*/
     vector<vector<Point>> triangulate(const shared_ptr<Face> &face, int &oldFaceID){
         vector<vector<Point>> triangles;
         //check how many sides current face has
@@ -1442,6 +1494,8 @@ namespace seidel{
     }
 }
 
+/*by Daniel Jolley-Rogers u7511912
+attempts to make an object a tri mesh*/
 void makeObjectTri(Object &object){
     vector<shared_ptr<Vertex>> vertices;
     vector<shared_ptr<Face>> faces;
@@ -1554,6 +1608,8 @@ void makeObjectTri(Object &object){
     object.halfEdges = halfEdges;
 }
 
+/*by Daniel Jolley-Rogers u7511912
+runs all of the mesh checking functions on an object*/
 void checkMesh(Object &object, const string &fileName){
     cout << "checking characteristics of " << fileName << "\n";
     cout << "\tchecking if object tri";
@@ -1630,6 +1686,8 @@ void checkMesh(Object &object, const string &fileName){
     }
 }
 
+/*by Daniel Jolley-Rogers u7511912
+helper struct to compare Eigen vectors for a map*/
 struct LexographicLess {
     template<class T>
     bool operator()(T const& lhs, T const& rhs) const {
@@ -1637,6 +1695,8 @@ struct LexographicLess {
     }
 };
 
+/*by Daniel Jolley-Rogers u7511912
+saves an object as a .obj file*/
 bool saveMeshASOBJ(const Object &object, string fileNameQualifier){
     int positionCounter = 1;
     int textureCounter = 1;
@@ -1725,6 +1785,8 @@ bool saveMeshASOBJ(const Object &object, string fileNameQualifier){
     return true;
 }
 
+/*by Daniel Jolley-Rogers u7511912
+loads a mesh, runs the checkers on it and then saves the mesh*/
 int main(int argc, char** argv){
     string fileString;
     if(argc >= 2){
