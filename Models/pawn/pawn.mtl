@@ -1,16 +1,12 @@
-# 3ds Max Wavefront OBJ Exporter v0.97b - (c)2007 guruware
-# File Created: 12.01.2012 15:41:59
+# Blender 4.4.3 MTL File: 'None'
+# www.blender.org
 
-newmtl 12937_WoodenChessPawnSideB
-	Ns 36.0000
-	Ni 1.5000
-	d 1.0000
-	Tr 0.0000
-	Tf 1.0000 1.0000 1.0000 
-	illum 2
-	Ka 1.0000 1.0000 1.0000
-	Kd 1.0000 1.0000 1.0000
-	Ks 0.5400 0.5400 0.5400
-	Ke 0.0000 0.0000 0.0000
-	map_Ka pawnDiffuse.jpg
-	map_Kd pawnDiffuse.jpg
+newmtl pawn
+Ns 1000.000000
+Ka 0.525680 0.525680 0.525680
+Ks 0.000000 0.000000 0.000000
+Ke 0.000000 0.000000 0.000000
+Ni 0.000000
+d 1.000000
+illum 1
+map_Kd C:/Users/yuezh/Desktop/pawnDiffuse.jpg
